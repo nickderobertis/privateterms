@@ -32,7 +32,13 @@ case "$mode" in
     crate="$ROOT/target/package/privateterms-$version.crate"
     [ -f "$crate" ] || fail "cargo package wrote no $crate" "re-run; check the target directory"
     tar -xzf "$crate" -C "$work"
-    dependency="{ path = \"$work/privateterms-$version\" }"
+    extracted="$work/privateterms-$version"
+    # On Windows (Git Bash) the manifest is read by a native cargo, which needs the
+    # drive-letter spelling of the path rather than the shell's.
+    if command -v cygpath >/dev/null 2>&1; then
+      extracted="$(cygpath -m "$extracted")"
+    fi
+    dependency="{ path = \"$extracted\" }"
     ;;
   published)
     version="${2:-}"
