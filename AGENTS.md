@@ -59,7 +59,8 @@ private terms identically.
   crate's profile to combine; per-platform release archives — the one artifact is a
   platform-independent crate, so each `build-<platform>` release job proves the packaged
   crate on its platform and `publish` publishes it once; a bench tier — no hot path has
-  a performance requirement yet.
+  a performance requirement yet; `msrv` in a `clippy.toml` — clippy reads Cargo.toml's
+  `rust-version` itself, so the MSRV keeps one source.
 
 ## Command surface
 
