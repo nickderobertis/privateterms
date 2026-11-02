@@ -1,0 +1,27 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "privateterms",
+  "projectType": "library",
+  "tags": ["type:library", "lang:rust"],
+  "implicitDependencies": ["conformance", "spec"],
+  "targets": {
+    "format": {
+      "command": "cargo fmt -p privateterms --check",
+      "cache": true
+    },
+    "lint": {
+      "command": "cargo clippy -p privateterms --all-targets --locked -- -D warnings && RUSTDOCFLAGS='-D warnings' cargo doc -p privateterms --no-deps --locked",
+      "cache": true
+    },
+    "test": {
+      "command": "bash scripts/crate-test.sh",
+      "options": { "cwd": "{workspaceRoot}" },
+      "inputs": ["default", "^default", "{workspaceRoot}/Cargo.lock", "{workspaceRoot}/scripts/crate-test.sh"],
+      "cache": true
+    },
+    "build": {
+      "command": "cargo build -p privateterms --locked",
+      "cache": true
+    }
+  }
+}

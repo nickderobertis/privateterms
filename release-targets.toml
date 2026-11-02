@@ -1,0 +1,18 @@
+# What this repository publishes, and the only identifiers scripts/release-probe.sh will
+# answer for. The schema is the canonical release-target schema nickderobertis/onevcs
+# defines and reads (`onevcs release declaration .`).
+#
+# One target: the SDK crate on crates.io. The specification and the conformance suite
+# are not published artifacts — a consumer reads them from this repository — so they
+# are not targets. Every `id` is `<registry>:<name>`, the name exactly what that
+# registry serves; `crate` is the short name a dependent's plan waits on, and it is
+# frozen.
+schema_version = 2
+probe = "scripts/release-probe.sh"
+
+[[target]]
+id = "crate:privateterms"
+name = "crate"
+what = "The privateterms SDK crate — the declaration model, resolution, the matcher and the crate's storage bindings — as a Rust dependent takes it from crates.io."
+published_by = ".github/workflows/release.yml — the publish job, through `just release publish publish --tag <tag>`, under crates/privateterms/Cargo.toml's [package] name."
+manifest = "crates/privateterms/Cargo.toml"

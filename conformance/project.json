@@ -1,0 +1,13 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "name": "conformance",
+  "projectType": "library",
+  "tags": ["type:contract"],
+  "targets": {
+    "lint": {
+      "command": "node conformance/check-cases.mjs",
+      "options": { "cwd": "{workspaceRoot}" },
+      "cache": true
+    }
+  }
+}
