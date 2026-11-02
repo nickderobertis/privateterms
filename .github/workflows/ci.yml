@@ -96,6 +96,8 @@ jobs:
       # job, beside the advisories, licenses, sources, unused dependencies and the MSRV.
       - name: Check the supply chain, the dependency bans and the MSRV
         run: just supply-chain
+      # setup-llmlint.sh installs llmlint with `uv tool`, and the runner image carries no uv.
+      - uses: astral-sh/setup-uv@v7
       - name: Install oneharness and llmlint
         run: |
           ./scripts/setup-llmlint.sh
