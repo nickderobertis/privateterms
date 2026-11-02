@@ -4,7 +4,6 @@
 // jobs it skips have nothing to prove. ci.yml's `lint` job runs it on the release
 // tool's branch:
 //
-// llmlint: ignore[typescript_and_npm_launched_via_bun] The composed repository runs this copy, before its lint job installs bun or any dependency, on the runner's own Node with built-ins only; bun is dero-skills' launch convention, not one a composed repository's lint job has set up at this step.
 //   node scripts/release-branch-guard.mjs --base <sha> [--head <ref>]
 //
 // It compares the merge base of <sha> and <ref> (default HEAD) with <ref>, file by

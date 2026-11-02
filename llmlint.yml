@@ -10,6 +10,17 @@ files:
   # List committed files that shouldn't be judged (lock files, generated output).
   exclude:
     - "**/.git/**"
+    # Lockfiles: resolver output, not authored text.
+    - "Cargo.lock"
+    - "bun.lock"
+    # The conformance cases are data: what they mean is checked by running them
+    # (crates/privateterms/tests/conformance.rs), and their shape by
+    # conformance/check-cases.mjs; the seeded onevcs files are that tag's outcomes
+    # verbatim, which no judge may rewrite.
+    - "conformance/cases/**"
+    # A verbatim copy of the create-repo skill's script, which the baseline checker
+    # holds to that copy byte for byte; findings there belong to the skill.
+    - "scripts/actions-budget-figures.sh"
 rationales: true
 # No `agents` block: the harness/model are NOT pinned here. `oneharness.toml`
 # (composed alongside this file) selects them in fallback mode — codex + gpt-5.5
