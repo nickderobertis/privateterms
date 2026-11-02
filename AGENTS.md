@@ -23,12 +23,8 @@ private terms identically.
 - **Contract 0 is a shared interface.** The crate's public API (pinned by
   `crates/privateterms/tests/contract_api.rs`) and the serialization of its types are
   what consumers build on; never change them unilaterally.
-- **Matching stays byte-for-byte with onevcs v0.57.6.** `conformance/cases/onevcs-v0.57.6-*.json`
-  hold onevcs's own outcomes at that tag; a case there is never edited to fit the crate.
-- **No error discloses a term.** Errors name the problem only; a path is a separate
-  field printed only as a screened locator.
-- **YAML only through serde-saphyr, under `src/yaml/options.rs`.** `deny.toml` bans the
-  libyaml crates (RUSTSEC-2024-0449).
+- **Matching stays byte-for-byte with onevcs v0.57.6**, whose own outcomes the
+  conformance suite holds.
 - **Every example and fixture name is invented**: this is a public repository.
 
 ## Two standing goals on every task
