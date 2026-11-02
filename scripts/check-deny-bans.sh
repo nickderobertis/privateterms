@@ -53,7 +53,11 @@ TOML
   version="$(cd "$dir" && cargo pkgid "$crate" 2>/dev/null | sed 's/.*[@#]//')"
   own="$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$ROOT/crates/privateterms/Cargo.toml" | head -n 1)"
   sed -i.bak -e "s/^$crate = \"\\*\"/$crate = \"=$version\"/" -e "s/version = \"\\*\" }/version = \"=$own\" }/" "$dir/Cargo.toml"
-  if (cd "$dir" && cargo deny --manifest-path Cargo.toml check --config "$ROOT/deny.toml" bans) >"$dir/log" 2>&1; then
+  # The fixture carries this repository's deny.toml as its own, which every cargo-deny
+  # reads from the working directory by default; where `--config` goes moved between
+  # releases (after `check` up to 0.19, refused there by 0.20).
+  cp "$ROOT/deny.toml" "$dir/deny.toml"
+  if (cd "$dir" && cargo deny --manifest-path Cargo.toml check bans) >"$dir/log" 2>&1; then
     echo "check-deny-bans: a graph adding $crate passed cargo deny check bans" >&2
     echo "check-deny-bans: next: restore deny.toml's [bans] deny entry for $crate" >&2
     exit 1

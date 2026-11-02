@@ -31,7 +31,9 @@ case "$mode" in
     version="$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$ROOT/crates/privateterms/Cargo.toml" | head -n 1)"
     crate="$ROOT/target/package/privateterms-$version.crate"
     [ -f "$crate" ] || fail "cargo package wrote no $crate" "re-run; check the target directory"
-    tar -xzf "$crate" -C "$work"
+    # The archive reaches tar on stdin and the destination as its working directory, so no
+    # path is a tar argument: GNU tar on Windows reads a `D:` path as a remote host.
+    (cd "$work" && tar -xzf - <"$crate")
     extracted="$work/privateterms-$version"
     # On Windows (Git Bash) the manifest is read by a native cargo, which needs the
     # drive-letter spelling of the path rather than the shell's.

@@ -155,13 +155,13 @@ fn every_yaml_read_in_the_crate_goes_through_the_one_hardened_options_function()
                     if code.contains(reader) {
                         reads.push(format!(
                             "{}:{}",
-                            path.strip_prefix(source).unwrap_or(&path).display(),
+                            slashed(path.strip_prefix(source).unwrap_or(&path)),
                             number + 1
                         ));
                     }
                 }
                 if code.contains("serde_saphyr::options!") {
-                    reads.push(format!("options!@{}", path.display()));
+                    reads.push(format!("options!@{}", slashed(&path)));
                 }
             }
         }
@@ -183,4 +183,9 @@ fn every_yaml_read_in_the_crate_goes_through_the_one_hardened_options_function()
         yaml.contains("serde_saphyr::from_str_with_options(raw, options::options())"),
         "src/yaml.rs reads under options::options()"
     );
+}
+
+/// A path spelled with `/` separators, so a site reads the same on Windows as elsewhere.
+fn slashed(path: &std::path::Path) -> String {
+    path.display().to_string().replace('\\', "/")
 }
