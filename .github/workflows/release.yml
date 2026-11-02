@@ -39,8 +39,10 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Read-only: this repository's one artifact is the platform-independent crate, which
+    # `publish` publishes once; a build job packages and exercises it, and uploads nothing.
     permissions:
-      contents: write # upload this platform's archive to the GitHub Release
+      contents: read
     env:
       TAG: ${{ github.event.release.tag_name }}
     defaults:
@@ -57,9 +59,6 @@ jobs:
         run: just release build-linux build --tag "$TAG"
       - name: Publish the Linux artifacts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: just release build-linux publish --tag "$TAG"
       - name: Install and run the Linux artifacts from the registries
         run: just release build-linux verify --tag "$TAG"
@@ -68,8 +67,10 @@ jobs:
   build-linux-arm64:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
+    # Read-only: this repository's one artifact is the platform-independent crate, which
+    # `publish` publishes once; a build job packages and exercises it, and uploads nothing.
     permissions:
-      contents: write # upload this platform's archive to the GitHub Release
+      contents: read
     env:
       TAG: ${{ github.event.release.tag_name }}
     defaults:
@@ -86,9 +87,6 @@ jobs:
         run: just release build-linux-arm64 build --tag "$TAG"
       - name: Publish the Linux arm64 artifacts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: just release build-linux-arm64 publish --tag "$TAG"
       - name: Install and run the Linux arm64 artifacts from the registries
         run: just release build-linux-arm64 verify --tag "$TAG"
@@ -97,8 +95,10 @@ jobs:
   build-macos:
     runs-on: macos-latest
     timeout-minutes: 30
+    # Read-only: this repository's one artifact is the platform-independent crate, which
+    # `publish` publishes once; a build job packages and exercises it, and uploads nothing.
     permissions:
-      contents: write # upload this platform's archive to the GitHub Release
+      contents: read
     env:
       TAG: ${{ github.event.release.tag_name }}
     defaults:
@@ -115,9 +115,6 @@ jobs:
         run: just release build-macos build --tag "$TAG"
       - name: Publish the macOS artifacts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: just release build-macos publish --tag "$TAG"
       - name: Install and run the macOS artifacts from the registries
         run: just release build-macos verify --tag "$TAG"
@@ -126,8 +123,10 @@ jobs:
   build-windows:
     runs-on: windows-latest
     timeout-minutes: 30
+    # Read-only: this repository's one artifact is the platform-independent crate, which
+    # `publish` publishes once; a build job packages and exercises it, and uploads nothing.
     permissions:
-      contents: write # upload this platform's archive to the GitHub Release
+      contents: read
     env:
       TAG: ${{ github.event.release.tag_name }}
     defaults:
@@ -144,9 +143,6 @@ jobs:
         run: just release build-windows build --tag "$TAG"
       - name: Publish the Windows artifacts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: just release build-windows publish --tag "$TAG"
       - name: Install and run the Windows artifacts from the registries
         run: just release build-windows verify --tag "$TAG"
@@ -175,7 +171,6 @@ jobs:
         run: just release publish build --tag "$TAG"
       - name: Publish the platform-independent artifacts
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: just release publish publish --tag "$TAG"
       - name: Confirm the registries resolve the platform-independent artifacts
