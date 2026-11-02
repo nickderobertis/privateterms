@@ -1,0 +1,700 @@
+{
+  "description": "onevcs's public-phrase file tests at v0.57.6 (phrases.rs and the tests feeding it), restated in the model: its version-1 phrase file is a version-2 declaration's phrases. Cases about that file's own YAML syntax or encoding are the crate's binding tests, not conformance cases.",
+  "cases": [
+    {
+      "id": "onevcs-phrases-docs-contract-block-12",
+      "source": "onevcs v0.57.6 docs/contract.md Host public phrases (fed to phrases::parse by crates/onevcs/src/yaml/tests.rs:every_yaml_block_of_the_contract_reads_the_value_it_always_read, golden tests/golden/yaml-reads/contract-block-12.txt)",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "box-ab"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-ok-dedup",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv",
+              "bench-zorv",
+              "RIG-ZORV"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-1",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it carries a key other than `version` and `phrases`); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv"
+            ],
+            "extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unknown-member"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-2",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it declares version 2; this build reads version 1 only); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 3,
+            "phrases": [
+              "rig-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-3",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (phrase 2 is empty once normalized); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv",
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-phrase"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-5",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it declares no `version`); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "phrases": [
+              "rig-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-7",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it is not a mapping of `version` and `phrases`); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": [
+            "rig-zorv"
+          ]
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-8",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it is not a mapping of `version` and `phrases` (empty document)); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": null
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-9",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (its `version` is not a whole number); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": "one",
+            "phrases": [
+              "rig-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-10",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (its `phrases` is not a list); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": "rig-zorv"
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-11",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (phrase 2 is not a string); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv",
+              7
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-12",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (phrase 1 is not a string); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              {
+                "rig-zorv": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    },
+    {
+      "id": "onevcs-phrases-lib-refused-directory",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/library.rs:the_hosts_public_phrases_are_read_by_the_library_and_exempt_through_the_one_matcher",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "A phrase file onevcs cannot read (it is not a regular file) makes the check unavailable: in the model, an unreadable level.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "fallback",
+          "unreadable": true
+        }
+      ],
+      "rules": [
+        {
+          "term": "zorv",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "rig-zorv",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-ok-machine",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs: PHRASES (every journey)",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-ok-dedup",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:a_standing_phrase_exempts_the_term_inside_it_and_the_term_is_refused_everywhere_else",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv",
+              "RIG-ZORV",
+              "bench-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-ok-mirror",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:a_case_sensitive_term_is_exempted_in_its_declared_casing_and_any_other_casing_carries_none",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "zorv-rig"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-refused-1",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:refused_files (used by a_phrase_file_this_build_cannot_read_exactly_makes_the_check_unavailable_unless_nothing_is_matched and a_phrase_file_this_build_refuses_holds_a_publication_unless_its_scope_matches_nothing)",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it carries a key other than `version` and `phrases`); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv"
+            ],
+            "extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unknown-member"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-refused-2",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:refused_files (used by a_phrase_file_this_build_cannot_read_exactly_makes_the_check_unavailable_unless_nothing_is_matched and a_phrase_file_this_build_refuses_holds_a_publication_unless_its_scope_matches_nothing)",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it declares version 2; this build reads version 1 only); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 3,
+            "phrases": [
+              "rig-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-refused-3",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:refused_files (used by a_phrase_file_this_build_cannot_read_exactly_makes_the_check_unavailable_unless_nothing_is_matched and a_phrase_file_this_build_refuses_holds_a_publication_unless_its_scope_matches_nothing)",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (phrase 2 is empty once normalized); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv",
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-phrase"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-refused-4",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:refused_files (used by a_phrase_file_this_build_cannot_read_exactly_makes_the_check_unavailable_unless_nothing_is_matched and a_phrase_file_this_build_refuses_holds_a_publication_unless_its_scope_matches_nothing)",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (phrase 1 is empty once normalized); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "\u200b"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-phrase"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-refused-unreadable",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:Boundary::each_refused_file",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "A phrase file onevcs cannot read (it cannot be read) makes the check unavailable: in the model, an unreadable level.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "fallback",
+          "unreadable": true
+        }
+      ],
+      "rules": [
+        {
+          "term": "zorv",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "rig-zorv",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    },
+    {
+      "id": "onevcs-phrases-pp-refused-directory",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/public_phrases.rs:Boundary::each_refused_file",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "A phrase file onevcs cannot read (it is not a regular file) makes the check unavailable: in the model, an unreadable level.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "fallback",
+          "unreadable": true
+        }
+      ],
+      "rules": [
+        {
+          "term": "zorv",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "rig-zorv",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    },
+    {
+      "id": "onevcs-phrases-export-ok-machine",
+      "source": "onevcs v0.57.6 crates/onevcs/tests/e2e/export.rs:an_export_carrying_a_host_public_phrase_is_written_and_one_carrying_the_bare_term_is_not",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-zorv"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-audit-ok-machine",
+      "source": "onevcs v0.57.6 crates/onevcs-exposure-audit/tests/journeys.rs:an_occurrence_a_host_public_phrase_exempts_is_counted_and_listed_privately_never_found",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "A phrase list onevcs reads; phrases that are one once normalized and folded are kept once.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-quietharbor"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "onevcs-phrases-audit-refused-1",
+      "source": "onevcs v0.57.6 crates/onevcs-exposure-audit/tests/journeys.rs:a_host_public_phrase_file_the_audit_cannot_read_exactly_stops_the_run_before_any_read",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it declares version 2; this build reads version 1 only); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 3,
+            "phrases": [
+              "rig-quietharbor"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "onevcs-phrases-audit-refused-2",
+      "source": "onevcs v0.57.6 crates/onevcs-exposure-audit/tests/journeys.rs:a_host_public_phrase_file_the_audit_cannot_read_exactly_stops_the_run_before_any_read",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (it carries a key other than `version` and `phrases`); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "rig-quietharbor"
+            ],
+            "extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unknown-member"
+      }
+    },
+    {
+      "id": "onevcs-phrases-audit-refused-3",
+      "source": "onevcs v0.57.6 crates/onevcs-exposure-audit/tests/journeys.rs:a_host_public_phrase_file_the_audit_cannot_read_exactly_stops_the_run_before_any_read",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "onevcs refuses this phrase list (phrase 1 is empty once normalized); the model refuses the same content as an invalid declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-phrase"
+      }
+    },
+    {
+      "id": "onevcs-phrases-audit-refused-directory",
+      "source": "onevcs v0.57.6 crates/onevcs-exposure-audit/tests/journeys.rs:a_host_public_phrase_file_the_audit_cannot_read_exactly_stops_the_run_before_any_read",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "A phrase file onevcs cannot read (it is not a regular file) makes the check unavailable: in the model, an unreadable level.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "fallback",
+          "unreadable": true
+        }
+      ],
+      "rules": [
+        {
+          "term": "zorv",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "rig-zorv",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    }
+  ]
+}

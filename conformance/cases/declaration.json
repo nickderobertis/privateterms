@@ -1,0 +1,994 @@
+{
+  "description": "The declaration's members and every invalid form (Specification 1, The declaration).",
+  "cases": [
+    {
+      "id": "version-1-minimal",
+      "exercises": [
+        "DECL-VERSION"
+      ],
+      "description": "A version-1 declaration with no other member is valid.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "version-1-all-members",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-TERMS",
+        "DECL-EXCEPTIONS"
+      ],
+      "description": "Version 1 carries terms and exceptions.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss",
+              "vantorel"
+            ],
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "drop"
+              },
+              {
+                "term": "vantorel",
+                "action": "whole-word"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "version-1-every-exception-action",
+      "exercises": [
+        "DECL-EXCEPTIONS"
+      ],
+      "description": "Each of the four exception actions is valid.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "a1",
+              "b1",
+              "c1",
+              "d1"
+            ],
+            "exceptions": [
+              {
+                "term": "a1",
+                "action": "drop"
+              },
+              {
+                "term": "b1",
+                "action": "whole-word"
+              },
+              {
+                "term": "c1",
+                "action": "case-sensitive"
+              },
+              {
+                "term": "d1",
+                "action": "owner-name-only"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "version-2-all-members",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-REPLACEMENTS",
+        "DECL-PHRASES"
+      ],
+      "description": "Version 2 adds replacements and phrases.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "terms": [
+              "quillmoss"
+            ],
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "case-sensitive"
+              }
+            ],
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              },
+              {
+                "term": "vantorel",
+                "reject": true
+              }
+            ],
+            "phrases": [
+              "quillmoss-bridge"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "version-2-directory-level",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-REPLACEMENTS",
+        "DECL-PHRASES"
+      ],
+      "description": "A directory level may declare terms, replacements and phrases.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "terms": [
+              "ostrevane"
+            ],
+            "replacements": [
+              {
+                "term": "ostrevane",
+                "with": "sample"
+              }
+            ],
+            "phrases": [
+              "ostrevane bay"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "version-2-fallback-level",
+      "exercises": [
+        "DECL-REPLACEMENTS"
+      ],
+      "description": "A fallback level may declare replacements.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "ostrevane",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "yaml-boolean-words-are-terms",
+      "exercises": [
+        "DECL-TERMS",
+        "DECL-PHRASES"
+      ],
+      "description": "Words a YAML 1.1 reader would take as booleans are ordinary terms and phrases.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "terms": [
+              "yes",
+              "no",
+              "on",
+              "off"
+            ],
+            "phrases": [
+              "yes",
+              "no"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "valid"
+      }
+    },
+    {
+      "id": "phrases-one-once-folded-kept-once",
+      "exercises": [
+        "DECL-PHRASES"
+      ],
+      "description": "Phrases that are one once normalized and folded are kept once, the first as written: the second spelling adds nothing.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "Box-AB",
+              "box-ab",
+              "\uff42ox-ab"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "ab",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "ran on box-ab",
+      "expect": {
+        "outcome": "clean",
+        "exempted": 1
+      }
+    },
+    {
+      "id": "unknown-member",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-INVALID"
+      ],
+      "description": "A member the model does not define refuses the declaration.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "extra": [
+              "quillmoss"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unknown-member"
+      }
+    },
+    {
+      "id": "unknown-member-in-exception",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "DECL-INVALID"
+      ],
+      "description": "An exception entry carrying a member other than term and action is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss"
+            ],
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "drop",
+                "why": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unknown-member"
+      }
+    },
+    {
+      "id": "unknown-member-in-replacement",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "A replacement entry carrying a member other than term, with and reject is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example",
+                "also": "x"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unknown-member"
+      }
+    },
+    {
+      "id": "version-missing",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-INVALID"
+      ],
+      "description": "A declaration with no model version is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "terms": [
+              "quillmoss"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "version-zero",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-INVALID"
+      ],
+      "description": "Version 0 is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 0
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "version-three",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-INVALID"
+      ],
+      "description": "Version 3 is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 3
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "version-a-string",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-INVALID"
+      ],
+      "description": "A version that is not a whole number is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": "1"
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "version-fractional",
+      "exercises": [
+        "DECL-VERSION",
+        "DECL-INVALID"
+      ],
+      "description": "A fractional version is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "unsupported-version"
+      }
+    },
+    {
+      "id": "replacements-under-version-1",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "replacements is a version-2 member.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "member-requires-version-2"
+      }
+    },
+    {
+      "id": "phrases-under-version-1",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "phrases is a version-2 member.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "phrases": [
+              "quillmoss-bridge"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "member-requires-version-2"
+      }
+    },
+    {
+      "id": "empty-term",
+      "exercises": [
+        "DECL-TERMS",
+        "DECL-INVALID"
+      ],
+      "description": "An empty term is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss",
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-term"
+      }
+    },
+    {
+      "id": "term-empty-once-normalized",
+      "exercises": [
+        "DECL-TERMS",
+        "DECL-INVALID"
+      ],
+      "description": "A term that is only default-ignorable code points is empty once normalized.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "\u200b\u00ad"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-term"
+      }
+    },
+    {
+      "id": "empty-exception-term",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "DECL-INVALID"
+      ],
+      "description": "An exception naming an empty term is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss"
+            ],
+            "exceptions": [
+              {
+                "term": "",
+                "action": "drop"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-term"
+      }
+    },
+    {
+      "id": "empty-replacement-term",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "A replacement whose term is empty once normalized is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "\u200b",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-term"
+      }
+    },
+    {
+      "id": "empty-replacement-string",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "A replacement string empty once normalized is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "\u2060"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-term"
+      }
+    },
+    {
+      "id": "empty-phrase",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "An empty phrase is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "box-ab",
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-phrase"
+      }
+    },
+    {
+      "id": "phrase-empty-once-normalized",
+      "exercises": [
+        "DECL-PHRASES",
+        "DECL-INVALID"
+      ],
+      "description": "A phrase that is only a zero-width space is empty once normalized.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "\u200b"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "empty-phrase"
+      }
+    },
+    {
+      "id": "duplicate-terms",
+      "exercises": [
+        "DECL-TERMS",
+        "DECL-INVALID"
+      ],
+      "description": "Two terms that are one once normalized and folded are two entries naming one term.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss",
+              "QuillMoss"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "duplicate-entry"
+      }
+    },
+    {
+      "id": "duplicate-terms-nfkc",
+      "exercises": [
+        "DECL-TERMS",
+        "MATCH-NORMALIZE",
+        "DECL-INVALID"
+      ],
+      "description": "A full-width spelling is the same term once normalized.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss",
+              "\uff51uillmoss"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "duplicate-entry"
+      }
+    },
+    {
+      "id": "duplicate-exceptions",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "DECL-INVALID"
+      ],
+      "description": "Two exceptions naming one term are refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss"
+            ],
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "drop"
+              },
+              {
+                "term": "QUILLMOSS",
+                "action": "whole-word"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "duplicate-entry"
+      }
+    },
+    {
+      "id": "duplicate-replacements",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "Two replacement entries naming one term in one declaration are refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              },
+              {
+                "term": "Quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "duplicate-entry"
+      }
+    },
+    {
+      "id": "replacement-both",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "An entry that both replaces and rejects is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "replacement-shape"
+      }
+    },
+    {
+      "id": "replacement-neither",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "An entry that neither replaces nor rejects is refused.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "replacement-shape"
+      }
+    },
+    {
+      "id": "replacement-reject-false",
+      "exercises": [
+        "DECL-REPLACEMENTS",
+        "DECL-INVALID"
+      ],
+      "description": "reject is only ever true: false neither replaces nor rejects.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": false
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "replacement-shape"
+      }
+    },
+    {
+      "id": "exceptions-at-directory-level",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-NO-REMOVAL",
+        "DECL-INVALID"
+      ],
+      "description": "Only a repository's own declaration may declare exceptions.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "drop"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "exceptions-outside-repository"
+      }
+    },
+    {
+      "id": "exceptions-at-fallback-level",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-NO-REMOVAL",
+        "DECL-INVALID"
+      ],
+      "description": "A fallback level may not declare exceptions.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "drop"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "exceptions-outside-repository"
+      }
+    },
+    {
+      "id": "terms-not-a-list",
+      "exercises": [
+        "DECL-TERMS",
+        "DECL-INVALID"
+      ],
+      "description": "A member of the wrong shape is malformed.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": "quillmoss"
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    },
+    {
+      "id": "exception-unknown-action",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "DECL-INVALID"
+      ],
+      "description": "An exception action other than the four is malformed.",
+      "operation": "validate",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss"
+            ],
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "widen"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "outcome": "declaration-error",
+        "error": "malformed"
+      }
+    }
+  ]
+}

@@ -147,7 +147,11 @@ fn every_yaml_read_in_the_crate_goes_through_the_one_hardened_options_function()
             let text = std::fs::read_to_string(&path).expect("a source file");
             for (number, line) in text.lines().enumerate() {
                 let code = line.split("//").next().unwrap_or_default();
-                for reader in ["serde_saphyr::from_", "serde_saphyr::Deserializer", "serde_saphyr::read"] {
+                for reader in [
+                    "serde_saphyr::from_",
+                    "serde_saphyr::Deserializer",
+                    "serde_saphyr::read",
+                ] {
                     if code.contains(reader) {
                         reads.push(format!(
                             "{}:{}",

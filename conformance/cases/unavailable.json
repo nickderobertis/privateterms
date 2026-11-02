@@ -1,0 +1,202 @@
+{
+  "description": "The check-unavailable outcome (Specification 1, Outcomes).",
+  "cases": [
+    {
+      "id": "unreadable-repository-level",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "A repository level that cannot be read makes the check unavailable: nothing is reported clean.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "repository",
+          "unreadable": true
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    },
+    {
+      "id": "unreadable-fallback-level",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "Any level, the farthest included, makes the check unavailable when it cannot be read.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2
+          }
+        },
+        {
+          "kind": "fallback",
+          "unreadable": true
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    },
+    {
+      "id": "invalid-directory-level",
+      "exercises": [
+        "OUT-UNAVAILABLE",
+        "DECL-INVALID"
+      ],
+      "description": "An invalid level makes the check unavailable even where the text would be clean.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "phrases": [
+              "x"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "nothing private",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "member-requires-version-2"
+      }
+    },
+    {
+      "id": "invalid-level-with-exceptions",
+      "exercises": [
+        "OUT-UNAVAILABLE",
+        "DECL-EXCEPTIONS"
+      ],
+      "description": "A directory level declaring exceptions is invalid, so the check is unavailable.",
+      "operation": "detect",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "drop"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss",
+      "expect": {
+        "outcome": "unavailable",
+        "error": "exceptions-outside-repository"
+      }
+    },
+    {
+      "id": "invalid-level-blocks-replace",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "An invalid level means nothing is rewritten.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss",
+      "caller": [
+        {
+          "term": "quillmoss",
+          "with": "sample"
+        }
+      ],
+      "expect": {
+        "outcome": "unavailable",
+        "error": "replacement-shape"
+      }
+    },
+    {
+      "id": "invalid-level-blocks-resolve",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "Resolution itself is unavailable.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 7
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unsupported-version"
+      }
+    }
+  ]
+}

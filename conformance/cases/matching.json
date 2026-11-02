@@ -1,0 +1,1193 @@
+{
+  "description": "Matching: normalization, case, word characters and the three modes (Specification 1, Matching).",
+  "cases": [
+    {
+      "id": "substring-anywhere",
+      "exercises": [
+        "MATCH-SUBSTRING",
+        "OUT-DETECT"
+      ],
+      "description": "A substring rule is found anywhere, inside words included.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "text": "xquillmossy",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              1,
+              10
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "substring-every-occurrence",
+      "exercises": [
+        "MATCH-SUBSTRING",
+        "MATCH-HITS"
+      ],
+      "description": "Every occurrence is a hit, in order.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss and quillmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              0,
+              9
+            ],
+            "text": "quillmoss"
+          },
+          {
+            "term": "quillmoss",
+            "span": [
+              14,
+              23
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "substring-overlapping-occurrences",
+      "exercises": [
+        "MATCH-SUBSTRING",
+        "MATCH-HITS"
+      ],
+      "description": "Overlapping occurrences of one term are each a hit.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "aba",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "text": "ababa",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "aba"
+        ],
+        "hits": [
+          {
+            "term": "aba",
+            "span": [
+              0,
+              3
+            ],
+            "text": "aba"
+          },
+          {
+            "term": "aba",
+            "span": [
+              2,
+              5
+            ],
+            "text": "aba"
+          }
+        ]
+      }
+    },
+    {
+      "id": "substring-absent",
+      "exercises": [
+        "MATCH-SUBSTRING",
+        "OUT-DETECT"
+      ],
+      "description": "A text without the term is clean.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quill moss",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "whole-word-standalone",
+      "exercises": [
+        "MATCH-WHOLE-WORD"
+      ],
+      "description": "A whole-word rule is found standing alone.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "see quillmoss.",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              4,
+              13
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "whole-word-hyphen-is-a-boundary",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "`-` is not a word character, so quillmoss-core carries the term.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss-core",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              0,
+              9
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "whole-word-letter-continues",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "A following letter continues the word.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmossage",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "whole-word-digit-continues",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "A digit is a word character.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss2 2quillmoss",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "whole-word-underscore-continues",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "`_` is a word character.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss_core core_quillmoss",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "whole-word-unicode-letter-continues",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "Any Unicode letter is a word character.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "\u00e9quillmoss quillmoss\u00df",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "whole-word-unicode-digit-continues",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "A non-ASCII digit is a word character.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss\u0663",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "whole-word-punctuation-bounds",
+      "exercises": [
+        "MATCH-WHOLE-WORD",
+        "MATCH-WORD"
+      ],
+      "description": "Punctuation and spaces bound a word.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "(quillmoss)/quillmoss.",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              1,
+              10
+            ],
+            "text": "quillmoss"
+          },
+          {
+            "term": "quillmoss",
+            "span": [
+              12,
+              21
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "whole-word-one-standing-occurrence-suffices",
+      "exercises": [
+        "MATCH-WHOLE-WORD"
+      ],
+      "description": "One accepted occurrence among unaccepted ones is a hit.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmossy quillmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              11,
+              20
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "owner-name-standalone",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "An owner-name-only rule is found where the qualified name stands.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "clone hiddenco/docs now",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "hiddenco/docs"
+        ],
+        "hits": [
+          {
+            "term": "hiddenco/docs",
+            "span": [
+              6,
+              19
+            ],
+            "text": "hiddenco/docs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "owner-name-dot-git",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "`.git` after the name is still that repository.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "hiddenco/docs.git",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "hiddenco/docs"
+        ],
+        "hits": [
+          {
+            "term": "hiddenco/docs",
+            "span": [
+              0,
+              13
+            ],
+            "text": "hiddenco/docs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "owner-name-dot-continues",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "A `.` followed by a word character continues the name.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "hiddenco/docs.site",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "owner-name-letter-continues",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "A following letter continues the name.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "hiddenco/docsite",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "owner-name-hyphen-continues",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "A following `-` continues the name.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "hiddenco/docs-site",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "owner-name-prefix-continues",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "A preceding `-`, `.` or word character continues the owner.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "my-hiddenco/docs x.hiddenco/docs xhiddenco/docs",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "owner-name-dot-git-continues",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "`.git` followed by a name character is not the repository.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "hiddenco/docs.gitx hiddenco/docs.git-y",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "owner-name-trailing-dot",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "A `.` ending the text or followed by a non-word character does not continue the name.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "see hiddenco/docs. and hiddenco/docs./x",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "hiddenco/docs"
+        ],
+        "hits": [
+          {
+            "term": "hiddenco/docs",
+            "span": [
+              4,
+              17
+            ],
+            "text": "hiddenco/docs"
+          },
+          {
+            "term": "hiddenco/docs",
+            "span": [
+              23,
+              36
+            ],
+            "text": "hiddenco/docs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "owner-name-url",
+      "exercises": [
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "A URL path carries the qualified name.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "text": "https://github.com/hiddenco/docs/pull/1",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "hiddenco/docs"
+        ],
+        "hits": [
+          {
+            "term": "hiddenco/docs",
+            "span": [
+              19,
+              32
+            ],
+            "text": "hiddenco/docs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-insensitive-by-default",
+      "exercises": [
+        "MATCH-CASE"
+      ],
+      "description": "A rule that is not case-sensitive is compared in lower case.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "QuillMoss QUILLMOSS",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              0,
+              9
+            ],
+            "text": "QuillMoss"
+          },
+          {
+            "term": "quillmoss",
+            "span": [
+              10,
+              19
+            ],
+            "text": "QUILLMOSS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-sensitive-exact-only",
+      "exercises": [
+        "MATCH-CASE"
+      ],
+      "description": "A case-sensitive rule is found only spelled exactly.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "QuillMoss",
+          "mode": "whole-word",
+          "case_sensitive": true
+        }
+      ],
+      "text": "quillmoss QUILLMOSS QuillMoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "QuillMoss"
+        ],
+        "hits": [
+          {
+            "term": "QuillMoss",
+            "span": [
+              20,
+              29
+            ],
+            "text": "QuillMoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-sensitive-absent",
+      "exercises": [
+        "MATCH-CASE"
+      ],
+      "description": "No exact spelling, no hit.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "QuillMoss",
+          "mode": "whole-word",
+          "case_sensitive": true
+        }
+      ],
+      "text": "quillmoss",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "case-folding-non-ascii",
+      "exercises": [
+        "MATCH-CASE",
+        "MATCH-NORMALIZE"
+      ],
+      "description": "Non-ASCII letters are folded to lower case.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "\u00e9tangmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "\u00c9TANGMOSS",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "\u00e9tangmoss"
+        ],
+        "hits": [
+          {
+            "term": "\u00e9tangmoss",
+            "span": [
+              0,
+              10
+            ],
+            "text": "\u00c9TANGMOSS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-folding-final-sigma",
+      "exercises": [
+        "MATCH-CASE"
+      ],
+      "description": "Folding uses full-string lower case, so a word-final capital sigma folds to final sigma.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "\u03c3\u03bf\u03c6\u03bf\u03c2",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "\u03a3\u039f\u03a6\u039f\u03a3",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "\u03c3\u03bf\u03c6\u03bf\u03c2"
+        ],
+        "hits": [
+          {
+            "term": "\u03c3\u03bf\u03c6\u03bf\u03c2",
+            "span": [
+              0,
+              10
+            ],
+            "text": "\u03a3\u039f\u03a6\u039f\u03a3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nfkc-full-width",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "A full-width spelling is the term; the span is of the original text, three bytes a letter.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "see \uff51\uff55\uff49\uff4c\uff4c\uff4d\uff4f\uff53\uff53!",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              4,
+              31
+            ],
+            "text": "\uff51\uff55\uff49\uff4c\uff4c\uff4d\uff4f\uff53\uff53"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nfkc-ligature",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "A ligature folds onto the letters it renders as; the span covers the ligature.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "muffle",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "a mu\ufb04e here",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "muffle"
+        ],
+        "hits": [
+          {
+            "term": "muffle",
+            "span": [
+              2,
+              8
+            ],
+            "text": "mu\ufb04e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nfkc-term-spelled-compatibly",
+      "exercises": [
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A term written in a compatibility spelling is normalized too.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "\uff51uillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "\uff51uillmoss"
+        ],
+        "hits": [
+          {
+            "term": "\uff51uillmoss",
+            "span": [
+              0,
+              9
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nfkc-superscript",
+      "exercises": [
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A superscript digit is its digit.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "v2",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "v\u00b2",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "v2"
+        ],
+        "hits": [
+          {
+            "term": "v2",
+            "span": [
+              0,
+              3
+            ],
+            "text": "v\u00b2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "composed-and-decomposed-accent",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "A decomposed accent composes under NFKC; the span covers both code points.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "caf\u00e9",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "the cafe\u0301 is open",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "caf\u00e9"
+        ],
+        "hits": [
+          {
+            "term": "caf\u00e9",
+            "span": [
+              4,
+              10
+            ],
+            "text": "cafe\u0301"
+          }
+        ]
+      }
+    },
+    {
+      "id": "zero-width-space-inside",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "A zero-width space inside a term is removed; the span covers it.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quill\u200bmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              0,
+              12
+            ],
+            "text": "quill\u200bmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "soft-hyphen-and-joiner-inside",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "A soft hyphen and a word joiner are default-ignorable.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "qu\u00adill\u2060moss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              0,
+              14
+            ],
+            "text": "qu\u00adill\u2060moss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ignorable-at-edges-outside-span",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "A default-ignorable just outside a term is not part of its span.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "\u200bquillmoss\u200b",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              3,
+              12
+            ],
+            "text": "quillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "variation-selector-removed",
+      "exercises": [
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A variation selector is default-ignorable.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quil\ufe0flmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              0,
+              12
+            ],
+            "text": "quil\ufe0flmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ignorable-does-not-bound-a-word",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-WHOLE-WORD"
+      ],
+      "description": "Removing a default-ignorable joins its neighbours, so a letter after it still continues the word.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "quillmoss\u200bx",
+      "expect": {
+        "outcome": "clean",
+        "found": [],
+        "hits": []
+      }
+    },
+    {
+      "id": "span-after-length-changing-normalization",
+      "exercises": [
+        "MATCH-NORMALIZE",
+        "MATCH-HITS"
+      ],
+      "description": "Spans after a normalization that changed the length are still of the original text.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "text": "\ufb01 quill\u200bmoss \uff51uillmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              4,
+              16
+            ],
+            "text": "quill\u200bmoss"
+          },
+          {
+            "term": "quillmoss",
+            "span": [
+              17,
+              28
+            ],
+            "text": "\uff51uillmoss"
+          }
+        ]
+      }
+    },
+    {
+      "id": "several-rules-hits-ordered",
+      "exercises": [
+        "MATCH-HITS",
+        "OUT-DETECT"
+      ],
+      "description": "Hits of several rules are reported in order of start, the longer first.",
+      "operation": "detect",
+      "rules": [
+        {
+          "term": "moss",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "text": "a quillmoss",
+      "expect": {
+        "outcome": "detected",
+        "found": [
+          "moss",
+          "quillmoss"
+        ],
+        "hits": [
+          {
+            "term": "quillmoss",
+            "span": [
+              2,
+              11
+            ],
+            "text": "quillmoss"
+          },
+          {
+            "term": "moss",
+            "span": [
+              7,
+              11
+            ],
+            "text": "moss"
+          }
+        ]
+      }
+    }
+  ]
+}
