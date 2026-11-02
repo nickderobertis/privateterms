@@ -36,6 +36,10 @@ fn the_constants_are_as_stated() {
 }
 
 #[test]
+#[allow(
+    clippy::type_complexity,
+    reason = "each signature is spelled out literally on purpose: a type alias would let a reshaped signature compile"
+)]
 fn every_function_has_its_stated_signature() {
     let _: fn(&[u8], Format, LevelKind) -> Result<Declaration, DeclarationError> = parse;
     let _: fn(&Declaration) -> String = to_toml;

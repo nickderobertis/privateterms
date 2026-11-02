@@ -76,5 +76,10 @@ pub use matcher::{redact_all, Hit, Matcher, Replaced};
 pub use model::{Declaration, Exception, ExceptionAction, Replacement};
 pub use resolve::{resolve, Action, ResolvedRule, TermMode, TermRule};
 
+/// The README's examples, run as doctests so the documented bindings cannot drift.
+#[doc = include_str!("../README.md")]
+#[cfg(doctest)]
+pub struct ReadmeDoctests;
+
 /// The version of the specification this crate implements.
 pub const SPEC_VERSION: u32 = 1;
