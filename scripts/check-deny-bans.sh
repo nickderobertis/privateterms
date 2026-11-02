@@ -57,12 +57,15 @@ TOML
   # reads from the working directory by default; where `--config` goes moved between
   # releases (after `check` up to 0.19, refused there by 0.20).
   cp "$ROOT/deny.toml" "$dir/deny.toml"
-  if (cd "$dir" && cargo deny --manifest-path Cargo.toml check bans) >"$dir/log" 2>&1; then
+  # Colour off, as CI's runner otherwise gets an escape sequence between `error[banned]`
+  # and its colon; any that still arrives is stripped before the refusal is read.
+  if (cd "$dir" && cargo deny --color never --manifest-path Cargo.toml check bans) >"$dir/log" 2>&1; then
     echo "check-deny-bans: a graph adding $crate passed cargo deny check bans" >&2
     echo "check-deny-bans: next: restore deny.toml's [bans] deny entry for $crate" >&2
     exit 1
   fi
-  grep -q "error\[banned\]: crate '$crate = " "$dir/log" || {
+  sed $'s/\x1b\\[[0-9;]*m//g' "$dir/log" >"$dir/plain.log"
+  grep -q "error\[banned\]: crate '$crate = " "$dir/plain.log" || {
     cat "$dir/log" >&2
     echo "check-deny-bans: the refusal of a graph adding $crate does not name it (above)" >&2
     exit 1

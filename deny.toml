@@ -18,6 +18,10 @@ allow = [
     "Apache-2.0",
     # Unicode's own data tables, behind icu_normalizer and icu_properties.
     "Unicode-3.0",
+    # encoding_rs's WHATWG-derived data, behind serde-saphyr's reader (encoding_rs_io).
+    "BSD-3-Clause",
+    # foldhash, behind serde_json.
+    "Zlib",
 ]
 confidence-threshold = 0.9
 exceptions = []
