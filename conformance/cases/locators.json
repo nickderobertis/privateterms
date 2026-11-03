@@ -1,0 +1,578 @@
+{
+  "description": "Locators (Specification 1, Locators).",
+  "cases": [
+    {
+      "id": "every-kind-redacted",
+      "exercises": [
+        "LOC-SCREEN"
+      ],
+      "description": "A locator of each kind carrying a term is redacted, ordinals from 1 in emission order, and its record unfixable.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "source",
+          "value": "quillmoss-tracker"
+        },
+        {
+          "kind": "item",
+          "value": "QM-\u200bquillmoss-12"
+        },
+        {
+          "kind": "field",
+          "value": "\uff51uillmoss owner"
+        },
+        {
+          "kind": "metadata-key",
+          "value": "x-quillmoss"
+        },
+        {
+          "kind": "comment",
+          "value": "quillmoss/42"
+        },
+        {
+          "kind": "path",
+          "value": "docs/quillmoss.md"
+        },
+        {
+          "kind": "identity",
+          "value": "github.com/hiddenco/quillmoss"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "source",
+            "ordinal": 1
+          },
+          {
+            "redacted": true,
+            "kind": "item",
+            "ordinal": 2
+          },
+          {
+            "redacted": true,
+            "kind": "field",
+            "ordinal": 3
+          },
+          {
+            "redacted": true,
+            "kind": "metadata-key",
+            "ordinal": 4
+          },
+          {
+            "redacted": true,
+            "kind": "comment",
+            "ordinal": 5
+          },
+          {
+            "redacted": true,
+            "kind": "path",
+            "ordinal": 6
+          },
+          {
+            "redacted": true,
+            "kind": "identity",
+            "ordinal": 7
+          }
+        ],
+        "unfixable": true,
+        "reason": "identifier carries a private term"
+      }
+    },
+    {
+      "id": "passing-locator-verbatim",
+      "exercises": [
+        "LOC-SCREEN"
+      ],
+      "description": "A locator that passes is printed verbatim and the record is not unfixable.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "item",
+          "value": "ITEM-42"
+        },
+        {
+          "kind": "path",
+          "value": "src/quillmossy.rs"
+        },
+        {
+          "kind": "field",
+          "value": "Owner"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          "ITEM-42",
+          "src/quillmossy.rs",
+          "Owner"
+        ],
+        "unfixable": false,
+        "reason": null
+      }
+    },
+    {
+      "id": "ordinals-count-redacted-only",
+      "exercises": [
+        "LOC-SCREEN"
+      ],
+      "description": "Ordinals count only redacted locators, in emission order; passing ones are verbatim between them.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "path",
+          "value": "README.md"
+        },
+        {
+          "kind": "path",
+          "value": "quillmoss/README.md"
+        },
+        {
+          "kind": "item",
+          "value": "42"
+        },
+        {
+          "kind": "metadata-key",
+          "value": "QUILLMOSS"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          "README.md",
+          {
+            "redacted": true,
+            "kind": "path",
+            "ordinal": 1
+          },
+          "42",
+          {
+            "redacted": true,
+            "kind": "metadata-key",
+            "ordinal": 2
+          }
+        ],
+        "unfixable": true,
+        "reason": "identifier carries a private term"
+      }
+    },
+    {
+      "id": "ordinals-continue-from-first",
+      "exercises": [
+        "LOC-SCREEN"
+      ],
+      "description": "Within one answer ordinals continue from where earlier locators of that answer left them.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "item",
+          "value": "quillmoss"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "first_ordinal": 3,
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "item",
+            "ordinal": 3
+          }
+        ],
+        "unfixable": true
+      }
+    },
+    {
+      "id": "owner-name-only-identity",
+      "exercises": [
+        "LOC-SCREEN",
+        "MATCH-OWNER-NAME"
+      ],
+      "description": "An identity carrying an owner-name-only term is redacted; one where the name is continued passes.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "identity",
+          "value": "hiddenco/quillmoss.git"
+        },
+        {
+          "kind": "identity",
+          "value": "hiddenco/quillmoss-site"
+        }
+      ],
+      "rules": [
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "identity",
+            "ordinal": 1
+          },
+          "hiddenco/quillmoss-site"
+        ],
+        "unfixable": true
+      }
+    },
+    {
+      "id": "nfkc-and-zero-width-locators",
+      "exercises": [
+        "LOC-SCREEN",
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A full-width or zero-width spelling in a locator is matched as in text.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "field",
+          "value": "\uff31\uff55\uff49\uff4c\uff4c\uff4d\uff4f\uff53\uff53"
+        },
+        {
+          "kind": "comment",
+          "value": "quill\u200bmoss"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "field",
+            "ordinal": 1
+          },
+          {
+            "redacted": true,
+            "kind": "comment",
+            "ordinal": 2
+          }
+        ],
+        "unfixable": true
+      }
+    },
+    {
+      "id": "phrase-exempt-locator-passes",
+      "exercises": [
+        "LOC-SCREEN",
+        "MATCH-PHRASE-EXEMPT"
+      ],
+      "description": "A locator whose only hit a public phrase exempts passes verbatim.",
+      "operation": "screen-locators",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "phrases": [
+              "quillmoss-bridge"
+            ]
+          }
+        }
+      ],
+      "locators": [
+        {
+          "kind": "source",
+          "value": "quillmoss-bridge"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          "quillmoss-bridge"
+        ],
+        "unfixable": false
+      }
+    },
+    {
+      "id": "replaceable-term-still-redacted",
+      "exercises": [
+        "LOC-NOT-REWRITTEN"
+      ],
+      "description": "A locator carrying a term a replacement is declared for is still redacted, never rewritten.",
+      "operation": "screen-locators",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "locators": [
+        {
+          "kind": "path",
+          "value": "quillmoss/notes.md"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "path",
+            "ordinal": 1
+          }
+        ],
+        "unfixable": true,
+        "reason": "identifier carries a private term"
+      }
+    },
+    {
+      "id": "caller-replacement-still-redacted",
+      "exercises": [
+        "LOC-NOT-REWRITTEN"
+      ],
+      "description": "A caller's replacement does not rewrite a locator either.",
+      "operation": "screen-locators",
+      "levels": [],
+      "locators": [
+        {
+          "kind": "item",
+          "value": "QUILLMOSS-7"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "item",
+            "ordinal": 1
+          }
+        ],
+        "unfixable": true
+      }
+    },
+    {
+      "id": "unavailable-redacts-every-locator",
+      "exercises": [
+        "LOC-UNAVAILABLE",
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "When the check is unavailable every locator is redacted, a passing one included.",
+      "operation": "screen-locators",
+      "levels": [
+        {
+          "kind": "directory",
+          "unreadable": true
+        }
+      ],
+      "locators": [
+        {
+          "kind": "item",
+          "value": "ITEM-42"
+        },
+        {
+          "kind": "path",
+          "value": "README.md"
+        },
+        {
+          "kind": "identity",
+          "value": "hiddenco/quillmoss"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "item",
+            "ordinal": 1
+          },
+          {
+            "redacted": true,
+            "kind": "path",
+            "ordinal": 2
+          },
+          {
+            "redacted": true,
+            "kind": "identity",
+            "ordinal": 3
+          }
+        ],
+        "unfixable": true,
+        "reason": "identifier carries a private term"
+      }
+    },
+    {
+      "id": "invalid-level-redacts-every-locator",
+      "exercises": [
+        "LOC-UNAVAILABLE",
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "An invalid level also makes the check unavailable, redacting every locator.",
+      "operation": "screen-locators",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "a",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "locators": [
+        {
+          "kind": "source",
+          "value": "public-source"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "screened",
+        "locators": [
+          {
+            "redacted": true,
+            "kind": "source",
+            "ordinal": 1
+          }
+        ],
+        "unfixable": true
+      }
+    }
+  ]
+}

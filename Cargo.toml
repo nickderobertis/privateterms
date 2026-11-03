@@ -1,0 +1,35 @@
+# The Cargo workspace. One member today (`crates/privateterms`, the published SDK crate);
+# the conformance suite and the specification are Nx projects of their own and need no
+# Cargo manifest. Shared metadata lives in `[workspace.package]` and shared version
+# requirements in `[workspace.dependencies]`, so a member never pins its own copy. The
+# published *version* is not inherited: release-plz maintains it in the member manifest.
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2021"
+# The floor onevcs and onetaskgraph build at, so either can depend on this crate.
+rust-version = "1.89"
+license = "MIT"
+authors = ["Nick DeRobertis"]
+repository = "https://github.com/nickderobertis/privateterms"
+homepage = "https://github.com/nickderobertis/privateterms"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+# The JSON Schema derive every public type carries, so a consumer generates its wire
+# schema from this crate rather than restating it.
+schemars = { version = "1", features = ["preserve_order"] }
+# YAML is read and written only through serde-saphyr: safe Rust with its own parser.
+# Every libyaml translation (`unsafe-libyaml` and the serde_yaml family) is unmaintained
+# under RUSTSEC-2024-0449, and `deny.toml` bans each by name.
+serde-saphyr = "1.3"
+toml = { version = "1", default-features = false, features = ["std", "parse", "display", "serde"] }
+# The one automaton every term and phrase is matched through, as onevcs's matcher is.
+aho-corasick = "1"
+# NFKC, and the default-ignorable and combining-class tables normalization reads.
+icu_normalizer = "2.2"
+icu_properties = "2.2"
+tempfile = "3"

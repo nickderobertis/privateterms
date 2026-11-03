@@ -1,0 +1,63 @@
+# Versioning: on every push to main, open or update the release pull request from the merged
+# Conventional Commits, and — once that pull request has merged — tag the version and cut the
+# GitHub Release, which fires release.yml. The release pull request merges itself once its
+# required checks pass: this job arms auto-merge on it, and on nothing else.
+#
+# It authenticates with a PAT (RELEASE_PLZ_TOKEN) precisely so that the Release it cuts fires
+# release.yml and the pull request it opens runs ci.yml: a tag, release or pull request
+# created by the default GITHUB_TOKEN triggers no workflow. Without the token (a fork, or a
+# clone not yet configured) every step after the guard is skipped.
+
+name: Release-plz
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  release-plz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: release-plz
+      cancel-in-progress: false
+    steps:
+      - id: guard
+        name: Decide whether this repository can release
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+        run: echo "enabled=$([ -n "$RELEASE_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.enabled == 'true'
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLZ_TOKEN }}
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        if: steps.guard.outputs.enabled == 'true'
+      - uses: taiki-e/install-action@v2
+        if: steps.guard.outputs.enabled == 'true'
+        with:
+          tool: release-plz
+      - name: Tag and cut the GitHub Release of a merged release pull request
+        if: steps.guard.outputs.enabled == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+        run: release-plz release --git-token "$GITHUB_TOKEN"
+      - name: Open or update the release pull request
+        if: steps.guard.outputs.enabled == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+        run: release-plz release-pr --git-token "$GITHUB_TOKEN"
+      - name: Arm auto-merge on the release pull request
+        if: steps.guard.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+        run: |
+          pr="$(gh pr list --state open --json number,headRefName \
+            --jq 'map(select(.headRefName | startswith("release-plz-"))) | .[0].number // empty')"
+          [ -z "$pr" ] || gh pr merge "$pr" --auto --squash

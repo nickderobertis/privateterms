@@ -1,0 +1,1667 @@
+{
+  "description": "Layered declarations and precedence (Specification 1).",
+  "cases": [
+    {
+      "id": "default-is-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE",
+        "OUT-REJECT"
+      ],
+      "description": "A term no source resolves is rejected.",
+      "operation": "resolve",
+      "levels": [],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "level-terms-added-whole-word",
+      "exercises": [
+        "DECL-TERMS",
+        "LEVEL-ORDER"
+      ],
+      "description": "Every level's terms add whole-word, not case-sensitive rules, nearest first after the repository's own.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "vantorel"
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "ostrevane"
+            ]
+          }
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "pellucine"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "substring",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "vantorel",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "ostrevane",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "pellucine",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "replacement-names-new-term",
+      "exercises": [
+        "DECL-REPLACEMENTS"
+      ],
+      "description": "A replacement entry naming a term no rule carries adds it as a whole-word term.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "vantorel",
+                "with": "sample"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "vantorel",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "sample"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "replacement-names-carried-term",
+      "exercises": [
+        "DECL-REPLACEMENTS"
+      ],
+      "description": "A replacement entry naming a carried term adds no rule; matching is folded, so a different case is the same term.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "QUILLMOSS",
+                "with": "sample"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "substring",
+            "case_sensitive": false,
+            "action": {
+              "replace": "sample"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "repository-replace-over-default-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A repository level's replacement turns the default reject into replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "example"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "repository-reject-over-farther-replace",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A repository level's reject overrides a farther directory level's replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "repository-replace-over-farther-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A repository level's replace overrides a farther directory level's reject.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "near"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "near"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "repository-replacement-over-farther-replacement",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "The nearest level decides the replacement string too.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "near"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "far"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "near"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "directory-replace-over-default-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A directory level's replacement turns the default reject into replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "example"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "directory-reject-over-farther-replace",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A directory level's reject overrides a farther fallback level's replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "directory-replace-over-farther-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A directory level's replace overrides a farther fallback level's reject.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "near"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "near"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "directory-replacement-over-farther-replacement",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "The nearest level decides the replacement string too.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "near"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "far"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "near"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "fallback-replace-over-default-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A fallback level's replacement turns the default reject into replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "example"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "silent-near-level-defers-to-farther",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A nearer level that does not name the term leaves the decision to the next level that does.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "vantorel",
+                "reject": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "terms": [
+              "ostrevane"
+            ]
+          }
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "far"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "far"
+            }
+          },
+          {
+            "term": "ostrevane",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "vantorel",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "caller-replace-over-level-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "The caller's list is nearest of all: its replace overrides a repository's reject.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "caller": [
+        {
+          "term": "quillmoss",
+          "with": "caller"
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "caller"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "caller-reject-over-level-replace",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "The caller's reject overrides a level's replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "caller": [
+        {
+          "term": "quillmoss",
+          "reject": true
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "caller-later-entry-wins-replace",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "In the caller's list a later entry wins: reject then replace is replace.",
+      "operation": "resolve",
+      "levels": [],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "caller": [
+        {
+          "term": "quillmoss",
+          "reject": true
+        },
+        {
+          "term": "QuillMoss",
+          "with": "second"
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "second"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "caller-later-entry-wins-reject",
+      "exercises": [
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "In the caller's list a later entry wins: replace then reject is reject.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "far"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "caller": [
+        {
+          "term": "quillmoss",
+          "with": "first"
+        },
+        {
+          "term": "quillmoss",
+          "reject": true
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "caller-names-new-term",
+      "exercises": [
+        "LEVEL-PRECEDENCE",
+        "DECL-REPLACEMENTS"
+      ],
+      "description": "A caller entry naming a term no rule carries adds it as a whole-word term.",
+      "operation": "resolve",
+      "levels": [],
+      "caller": [
+        {
+          "term": "vantorel",
+          "with": "sample"
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "vantorel",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "sample"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "one-distance-disagreeing-rejects",
+      "exercises": [
+        "LEVEL-ONE-DISTANCE"
+      ],
+      "description": "Two levels at one distance (one location) resolving one term differently reject it, even over a farther replace.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "one"
+              }
+            ]
+          },
+          "location": "shared"
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "two"
+              }
+            ]
+          },
+          "location": "shared"
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "far"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "one-distance-replace-and-reject-rejects",
+      "exercises": [
+        "LEVEL-ONE-DISTANCE"
+      ],
+      "description": "Replace and reject at one distance reject.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "reject": true
+              }
+            ]
+          },
+          "location": "shared"
+        },
+        {
+          "kind": "fallback",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "one"
+              }
+            ]
+          },
+          "location": "shared"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "one-distance-agreeing-replaces",
+      "exercises": [
+        "LEVEL-ONE-DISTANCE"
+      ],
+      "description": "Two levels at one distance that agree resolve the term as they agree.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "same"
+              }
+            ]
+          },
+          "location": "shared"
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "QUILLMOSS",
+                "with": "same"
+              }
+            ]
+          },
+          "location": "shared"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "same"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "different-distances-do-not-conflict",
+      "exercises": [
+        "LEVEL-ONE-DISTANCE",
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "Levels at different locations are different distances: the nearer decides.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "one"
+              }
+            ]
+          },
+          "location": "a"
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "two"
+              }
+            ]
+          },
+          "location": "b"
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": {
+              "replace": "one"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-drop",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-OWN-RULES"
+      ],
+      "description": "A repository's drop exception removes its own derived rule.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "QuillMoss",
+                "action": "drop"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "hiddenco/quillmoss",
+            "mode": "substring",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-whole-word-narrows-substring",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-OWN-RULES"
+      ],
+      "description": "whole-word turns a substring rule whole-word and leaves a whole-word rule as it is.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "vantorel"
+            ],
+            "exceptions": [
+              {
+                "term": "quillmoss",
+                "action": "whole-word"
+              },
+              {
+                "term": "vantorel",
+                "action": "whole-word"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "vantorel",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-case-sensitive",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-OWN-RULES",
+        "MATCH-CASE"
+      ],
+      "description": "case-sensitive makes the rule case-sensitive, spelled as the exception spells it.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "QuillMoss",
+                "action": "case-sensitive"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "QuillMoss",
+            "mode": "whole-word",
+            "case_sensitive": true,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-case-sensitive-keeps-owner-name-spelling",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-OWN-RULES"
+      ],
+      "description": "An owner-name-only rule made case-sensitive keeps its own spelling.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "HiddenCo/QuillMoss",
+                "action": "case-sensitive"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "hiddenco/quillmoss",
+            "mode": "owner-name-only",
+            "case_sensitive": true,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-owner-name-only",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-OWN-RULES"
+      ],
+      "description": "owner-name-only removes the bare-word rule, leaving the term found through the derivation's qualified owner/name rule.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "docs",
+                "action": "owner-name-only"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "hiddenco/docs",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "docs",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "hiddenco/docs",
+            "mode": "substring",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-applies-to-own-declared-term",
+      "exercises": [
+        "DECL-EXCEPTIONS",
+        "LEVEL-OWN-RULES"
+      ],
+      "description": "An exception narrows a term the repository's own declaration adds.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "vantorel"
+            ],
+            "exceptions": [
+              {
+                "term": "vantorel",
+                "action": "case-sensitive"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          },
+          {
+            "term": "vantorel",
+            "mode": "whole-word",
+            "case_sensitive": true,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-names-no-term",
+      "exercises": [
+        "LEVEL-OWN-RULES",
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "An exception naming no rule the repository carries refuses the declaration, and the check is unavailable.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "vantorel",
+                "action": "drop"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "unavailable",
+        "error": "exception-names-no-term"
+      }
+    },
+    {
+      "id": "exception-cannot-name-a-farther-levels-term",
+      "exercises": [
+        "LEVEL-NO-REMOVAL",
+        "LEVEL-OWN-RULES"
+      ],
+      "description": "A repository's exception does not reach a term only a farther level adds: it names no rule of the repository's own.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "ostrevane",
+                "action": "drop"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "ostrevane"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "unavailable",
+        "error": "exception-names-no-term"
+      }
+    },
+    {
+      "id": "level-cannot-remove-farther-rule",
+      "exercises": [
+        "LEVEL-NO-REMOVAL"
+      ],
+      "description": "A repository dropping its own rule for a term does not remove the same term a farther level adds.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "exceptions": [
+              {
+                "term": "ostrevane",
+                "action": "drop"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "ostrevane"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "ostrevane",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "ostrevane",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "level-cannot-remove-derived-rule",
+      "exercises": [
+        "LEVEL-NO-REMOVAL"
+      ],
+      "description": "A directory level has no way to remove the repository's derived rule: its replacement changes only the action.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "sample"
+              }
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "hiddenco/quillmoss",
+          "mode": "owner-name-only",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "substring",
+            "case_sensitive": false,
+            "action": {
+              "replace": "sample"
+            }
+          },
+          {
+            "term": "hiddenco/quillmoss",
+            "mode": "owner-name-only",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    },
+    {
+      "id": "identical-rules-kept-once",
+      "exercises": [
+        "LEVEL-ORDER"
+      ],
+      "description": "Identical rules from several sources are kept once, the first.",
+      "operation": "resolve",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "QUILLMOSS"
+            ]
+          }
+        },
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 1,
+            "terms": [
+              "quillmoss"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "resolved",
+        "rules": [
+          {
+            "term": "quillmoss",
+            "mode": "whole-word",
+            "case_sensitive": false,
+            "action": "reject"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,1 +1,5 @@
 .gh-secrets-state.json
+.gate-time.json
+/target
+node_modules/
+.nx/

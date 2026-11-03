@@ -1,0 +1,844 @@
+{
+  "description": "Replacement and its refusals (Specification 1, Replacement and Outcomes).",
+  "cases": [
+    {
+      "id": "replace-one-term",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "A replaceable hit is rewritten at its span; every other character is kept.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "see QuillMoss-core.",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "see example-core.",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-every-occurrence",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "Every non-overlapping hit is rewritten in one pass.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "x1"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss, quillmoss; quillmoss",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "x1, x1; x1",
+        "replaced": 3
+      }
+    },
+    {
+      "id": "replace-nothing-to-replace",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "A clean text is returned unchanged with nothing replaced.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "nothing private here",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "nothing private here",
+        "replaced": 0
+      }
+    },
+    {
+      "id": "replace-all-rules-one-pass",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "Every rule's replaceable hits are rewritten in the one pass.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "alpha"
+              },
+              {
+                "term": "vantorel",
+                "with": "beta"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss then vantorel",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "alpha then beta",
+        "replaced": 2
+      }
+    },
+    {
+      "id": "replace-leftmost-longest",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "Of overlapping replaceable hits, the leftmost is taken, and of those starting together the longest.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "LONG"
+              },
+              {
+                "term": "quill",
+                "with": "SHORT"
+              },
+              {
+                "term": "mossbank",
+                "with": "BANK"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmossbank",
+      "rules": [
+        {
+          "term": "quill",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "mossbank",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "LONGbank",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-leftmost-wins-over-longer-later",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "A leftmost shorter hit wins over a longer one starting later.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "ab",
+                "with": "X"
+              },
+              {
+                "term": "bcde",
+                "with": "Y"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "abcde",
+      "rules": [
+        {
+          "term": "ab",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "bcde",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "Xcde",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-only-replaceable-spans",
+      "exercises": [
+        "OUT-REPLACE",
+        "OUT-REJECT"
+      ],
+      "description": "A rejected term is never rewritten: the replaceable one is, and the result is refused for the rejected one.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              },
+              {
+                "term": "vantorel",
+                "reject": true
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss and vantorel",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "vantorel",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "refused",
+        "refusal": "term-remains",
+        "remaining": [
+          "vantorel"
+        ],
+        "text": "example and vantorel"
+      }
+    },
+    {
+      "id": "replace-default-reject-is-not-rewritten",
+      "exercises": [
+        "OUT-REPLACE",
+        "OUT-REJECT",
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A term with no replacement resolves to reject and is left in place, so the result is refused.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss ostrevane",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "ostrevane",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "refused",
+        "refusal": "term-remains",
+        "remaining": [
+          "ostrevane"
+        ],
+        "text": "example ostrevane"
+      }
+    },
+    {
+      "id": "replace-juxtaposition-forms-term",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "A replacement that, beside the text around it, forms a term is refused on the re-match.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "van"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmosstorel",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "vantorel",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "refused",
+        "refusal": "term-remains",
+        "remaining": [
+          "vantorel"
+        ],
+        "text": "vantorel"
+      }
+    },
+    {
+      "id": "replace-juxtaposition-of-two-replacements",
+      "exercises": [
+        "OUT-REPLACE"
+      ],
+      "description": "Two adjacent replacements that together form a term are refused.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quill",
+                "with": "van"
+              },
+              {
+                "term": "moss",
+                "with": "torel"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss",
+      "rules": [
+        {
+          "term": "quill",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "moss",
+          "mode": "substring",
+          "case_sensitive": false
+        },
+        {
+          "term": "vantorel",
+          "mode": "substring",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "refused",
+        "refusal": "term-remains",
+        "remaining": [
+          "vantorel"
+        ],
+        "text": "vantorel"
+      }
+    },
+    {
+      "id": "replacement-carries-term",
+      "exercises": [
+        "OUT-REPLACEMENT-CARRIES"
+      ],
+      "description": "A replacement string that carries a hit is an error before anything is replaced.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "the vantorel project"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "vantorel",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "error",
+        "error": "replacement-carries-term"
+      }
+    },
+    {
+      "id": "replacement-carries-its-own-term",
+      "exercises": [
+        "OUT-REPLACEMENT-CARRIES"
+      ],
+      "description": "A replacement carrying its own term is an error.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "QuillMoss Inc"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "nothing here",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "error",
+        "error": "replacement-carries-term"
+      }
+    },
+    {
+      "id": "replacement-carries-term-nfkc",
+      "exercises": [
+        "OUT-REPLACEMENT-CARRIES",
+        "MATCH-NORMALIZE"
+      ],
+      "description": "The replacement string is matched by the same matcher, normalization included.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "\uff56antorel"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "vantorel",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "error",
+        "error": "replacement-carries-term"
+      }
+    },
+    {
+      "id": "replacement-exempt-by-phrase-is-allowed",
+      "exercises": [
+        "OUT-REPLACEMENT-CARRIES",
+        "MATCH-PHRASE-EXEMPT"
+      ],
+      "description": "A replacement whose only hit a public phrase exempts carries no hit.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "vantorel-bridge"
+              }
+            ],
+            "phrases": [
+              "vantorel-bridge"
+            ]
+          }
+        }
+      ],
+      "text": "quillmoss",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        },
+        {
+          "term": "vantorel",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "vantorel-bridge",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-exempt-hit-is-kept",
+      "exercises": [
+        "OUT-REPLACE",
+        "MATCH-PHRASE-EXEMPT"
+      ],
+      "description": "An exempt hit is not a hit, so it is not rewritten.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "ab",
+                "with": "zz"
+              }
+            ],
+            "phrases": [
+              "box-ab"
+            ]
+          }
+        }
+      ],
+      "text": "box-ab and ab",
+      "rules": [
+        {
+          "term": "ab",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "box-ab and zz",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-span-in-original-full-width",
+      "exercises": [
+        "OUT-REPLACE",
+        "MATCH-HITS",
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A full-width hit is rewritten over its original bytes.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "[\uff51\uff55\uff49\uff4c\uff4c\uff4d\uff4f\uff53\uff53]",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "[example]",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-span-in-original-zero-width",
+      "exercises": [
+        "OUT-REPLACE",
+        "MATCH-HITS",
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A hit hidden by a zero-width space is rewritten whole; characters outside it are kept, an ignorable one included.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "quillmoss",
+                "with": "example"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "\u200bquill\u200bmoss\u200b!",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "\u200bexample\u200b!",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-span-in-original-decomposed",
+      "exercises": [
+        "OUT-REPLACE",
+        "MATCH-HITS",
+        "MATCH-NORMALIZE"
+      ],
+      "description": "A decomposed spelling is rewritten over both code points.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "caf\u00e9",
+                "with": "bistro"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "a cafe\u0301!",
+      "rules": [
+        {
+          "term": "caf\u00e9",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "a bistro!",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-case-sensitive-rule",
+      "exercises": [
+        "OUT-REPLACE",
+        "MATCH-CASE"
+      ],
+      "description": "Only the exact spelling of a case-sensitive rule is rewritten.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "directory",
+          "declaration": {
+            "schema_version": 2,
+            "replacements": [
+              {
+                "term": "QuillMoss",
+                "with": "Example"
+              }
+            ]
+          }
+        }
+      ],
+      "text": "QuillMoss quillmoss",
+      "rules": [
+        {
+          "term": "QuillMoss",
+          "mode": "whole-word",
+          "case_sensitive": true
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "Example quillmoss",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-caller-list",
+      "exercises": [
+        "OUT-REPLACE",
+        "LEVEL-PRECEDENCE"
+      ],
+      "description": "A caller's replacement list drives replacement with no level at all.",
+      "operation": "replace",
+      "levels": [],
+      "text": "quillmoss",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "caller": [
+        {
+          "term": "quillmoss",
+          "with": "sample"
+        }
+      ],
+      "expect": {
+        "outcome": "replaced",
+        "text": "sample",
+        "replaced": 1
+      }
+    },
+    {
+      "id": "replace-unavailable",
+      "exercises": [
+        "OUT-UNAVAILABLE"
+      ],
+      "description": "With an unreadable level nothing is rewritten: the check is unavailable.",
+      "operation": "replace",
+      "levels": [
+        {
+          "kind": "repository",
+          "declaration": {
+            "schema_version": 1
+          }
+        },
+        {
+          "kind": "directory",
+          "unreadable": true
+        }
+      ],
+      "text": "quillmoss",
+      "rules": [
+        {
+          "term": "quillmoss",
+          "mode": "whole-word",
+          "case_sensitive": false
+        }
+      ],
+      "caller": [
+        {
+          "term": "quillmoss",
+          "with": "sample"
+        }
+      ],
+      "expect": {
+        "outcome": "unavailable",
+        "error": "unreadable"
+      }
+    }
+  ]
+}

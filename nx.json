@@ -1,0 +1,65 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/tests/**/*"
+    ]
+  },
+  "targetDefaults": {
+    "budgets": {
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/**/*",
+        "^production",
+        {
+          "dependentTasksOutputFiles": "**/telemetry/*.json"
+        },
+        {
+          "externalDependencies": [
+            "@onebudgetspec/cli"
+          ]
+        }
+      ]
+    },
+    "budgets-host": {
+      "cache": false
+    },
+    "format": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "{workspaceRoot}/rustfmt.toml"
+      ]
+    },
+    "lint": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/Cargo.lock"
+      ]
+    },
+    "test": {
+      "cache": true
+    },
+    "build": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/Cargo.lock"
+      ]
+    },
+    "e2e": {
+      "cache": true
+    }
+  },
+  "defaultBase": "main"
+}

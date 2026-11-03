@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "consumer",
+  "projectType": "application",
+  "tags": ["type:e2e"],
+  "implicitDependencies": ["privateterms"],
+  "targets": {
+    "e2e": {
+      "command": "bash scripts/package-smoke.sh packaged",
+      "options": { "cwd": "{workspaceRoot}" },
+      "inputs": ["default", "^default", "{workspaceRoot}/Cargo.lock", "{workspaceRoot}/scripts/package-smoke.sh"],
+      "cache": true
+    }
+  }
+}

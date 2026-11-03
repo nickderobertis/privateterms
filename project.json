@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "name": "workspace",
+  "tags": ["type:workspace"],
+  "targets": {
+    "lint": {
+      "command": "node scripts/check-project-boundaries.mjs && bash scripts/check-deny-bans.sh",
+      "inputs": [
+        "{workspaceRoot}/deny.toml",
+        "{workspaceRoot}/Cargo.toml",
+        "{workspaceRoot}/Cargo.lock",
+        "{workspaceRoot}/**/project.json",
+        "{workspaceRoot}/scripts/check-deny-bans.sh",
+        "{workspaceRoot}/scripts/check-project-boundaries.mjs"
+      ],
+      "cache": true
+    }
+  }
+}
