@@ -34,3 +34,7 @@ unsafe_code = "forbid"
 
 [lints.clippy]
 all = { level = "deny", priority = -1 }
+
+[[bench]]
+name = "clean_runs"
+harness = false
