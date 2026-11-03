@@ -58,7 +58,6 @@ jobs:
       - name: Build, package and test-install the Linux artifacts
         run: just release build-linux build --tag "$TAG"
       - name: Publish the Linux artifacts
-        env:
         run: just release build-linux publish --tag "$TAG"
       - name: Install and run the Linux artifacts from the registries
         run: just release build-linux verify --tag "$TAG"
@@ -86,7 +85,6 @@ jobs:
       - name: Build, package and test-install the Linux arm64 artifacts
         run: just release build-linux-arm64 build --tag "$TAG"
       - name: Publish the Linux arm64 artifacts
-        env:
         run: just release build-linux-arm64 publish --tag "$TAG"
       - name: Install and run the Linux arm64 artifacts from the registries
         run: just release build-linux-arm64 verify --tag "$TAG"
@@ -114,7 +112,6 @@ jobs:
       - name: Build, package and test-install the macOS artifacts
         run: just release build-macos build --tag "$TAG"
       - name: Publish the macOS artifacts
-        env:
         run: just release build-macos publish --tag "$TAG"
       - name: Install and run the macOS artifacts from the registries
         run: just release build-macos verify --tag "$TAG"
@@ -142,7 +139,6 @@ jobs:
       - name: Build, package and test-install the Windows artifacts
         run: just release build-windows build --tag "$TAG"
       - name: Publish the Windows artifacts
-        env:
         run: just release build-windows publish --tag "$TAG"
       - name: Install and run the Windows artifacts from the registries
         run: just release build-windows verify --tag "$TAG"
