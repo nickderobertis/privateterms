@@ -42,7 +42,14 @@ jobs:
       - uses: taiki-e/install-action@v2
         if: steps.guard.outputs.enabled == 'true'
         with:
-          tool: release-plz
+          # Pinned: install-action installs the musl binary, and in releases 0.3.172-0.4.2
+          # pest's stack guard can misread musl's main-thread stack and reject the
+          # changelog header template with "Template parse error ... stack limit
+          # reached". Whether it trips depends on the stack already in use, so it fails
+          # on some runs and environments (this repository's release PR on GitHub's
+          # runner) and not others (release-plz/release-plz#3299, fixed in 0.4.3 by
+          # #3301). Raise deliberately.
+          tool: release-plz@0.4.3
       - name: Tag and cut the GitHub Release of a merged release pull request
         if: steps.guard.outputs.enabled == 'true'
         env:
