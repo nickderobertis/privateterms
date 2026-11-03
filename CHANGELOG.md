@@ -5,6 +5,12 @@ from the Conventional Commits a release carries.
 
 ## [Unreleased]
 
+## [0.1.1](https://github.com/nickderobertis/privateterms/compare/v0.1.0...v0.1.1) - 2026-11-03
+
+### Performance
+
+- *(matcher)* scan text with no private term at little more than the cost of reading it ([#7](https://github.com/nickderobertis/privateterms/pull/7))
+
 ## [0.1.0](https://github.com/nickderobertis/privateterms/releases/tag/v0.1.0) - 2026-11-03
 
 ### Added
