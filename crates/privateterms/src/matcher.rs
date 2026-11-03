@@ -15,7 +15,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{ReplacementCarriesTerm, Unbuildable};
 use crate::locator::{Locator, LocatorKind};
-use crate::normalize::{fold, in_normalized, normalize, term_key, unfold, Mapped};
+use crate::normalize::{
+    candidate_text_is_stable, fold, in_normalized, normalize, term_key, unfold, Mapped,
+};
 use crate::resolve::{Action, ResolvedRule};
 use crate::TermMode;
 
@@ -44,6 +46,8 @@ pub struct Replaced {
 /// texts.
 pub struct Matcher {
     rules: Vec<ResolvedRule>,
+    /// A conservative candidate search on stable text, ignoring ASCII case.
+    candidates: AhoCorasick,
     /// The automaton over every rule that ignores case, matched against folded text.
     folded: Option<Automaton>,
     /// The automaton over every case-sensitive rule, matched against normalized text.
@@ -102,7 +106,18 @@ impl Matcher {
                 folded.push((fold(&normalized).into_owned(), index));
             }
         }
+        let candidates = AhoCorasickBuilder::new()
+            .kind(Some(aho_corasick::AhoCorasickKind::DFA))
+            .ascii_case_insensitive(true)
+            .build(rules.iter().filter_map(|resolved| {
+                let key = term_key(&resolved.rule.term);
+                (!key.is_empty()).then_some(key)
+            }))
+            .map_err(|error| Unbuildable {
+                reason: error.to_string(),
+            })?;
         Ok(Matcher {
+            candidates,
             folded: Automaton::build(folded)?,
             exact: Automaton::build(exact)?,
             rules,
@@ -120,7 +135,6 @@ impl Matcher {
     pub fn find(&self, text: &str) -> Vec<usize> {
         let mut found: Vec<usize> = self
             .scan(text)
-            .1
             .iter()
             .filter(|hit| !hit.exempt)
             .map(|hit| hit.rule)
@@ -133,10 +147,11 @@ impl Matcher {
     /// Every non-exempt hit in `text`, each rule at each place once, with its span in
     /// `text` itself: ordered by start, then the longer first, then by rule.
     pub fn hits(&self, text: &str) -> Vec<Hit> {
-        let (mapped, found) = self.scan(text);
-        let Some(mapped) = mapped else {
+        let found = self.scan(text);
+        if !found.iter().any(|hit| !hit.exempt) {
             return Vec::new();
-        };
+        }
+        let mapped = Mapped::new(text);
         let mut hits: Vec<Hit> = found
             .iter()
             .filter(|hit| !hit.exempt)
@@ -170,7 +185,7 @@ impl Matcher {
         if self.phrases.is_none() {
             return 0;
         }
-        self.scan(text).1.iter().filter(|hit| hit.exempt).count()
+        self.scan(text).iter().filter(|hit| hit.exempt).count()
     }
 
     /// Rewrite `text` (Specification 1, *Replacement*): in one pass, the leftmost-longest
@@ -278,14 +293,17 @@ impl Matcher {
             .collect()
     }
 
-    /// Every accepted hit in `text`, exempt or not, and the mapped text it was read in.
-    fn scan<'t>(&self, text: &'t str) -> (Option<Mapped<'t>>, Vec<Found>) {
+    /// Every accepted hit in normalized or folded text, without building a span map.
+    fn scan(&self, text: &str) -> Vec<Found> {
         let mut found = Vec::new();
         if self.folded.is_none() && self.exact.is_none() {
-            return (None, found);
+            return found;
         }
-        let mapped = Mapped::new(text);
-        let normalized: &str = &mapped.normalized;
+        if !self.candidates.is_match(text) && candidate_text_is_stable(text) {
+            return found;
+        }
+        let normalized = normalize(text);
+        let normalized: &str = &normalized;
         let lowered = (self.folded.is_some() || self.phrases.is_some()).then(|| fold(normalized));
         let (in_folded, in_text) = match &lowered {
             Some(lowered) => self.standing(normalized, lowered),
@@ -297,7 +315,7 @@ impl Matcher {
         if let (Some(folded), Some(lowered)) = (&self.folded, &lowered) {
             folded.collect(&self.rules, lowered, &in_folded, true, &mut found);
         }
-        (Some(mapped), found)
+        found
     }
 
     /// Every standing occurrence of a public phrase, as byte spans of `lowered` (the

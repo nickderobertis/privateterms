@@ -6,7 +6,9 @@
 use std::borrow::Cow;
 
 use icu_normalizer::ComposingNormalizerBorrowed;
-use icu_properties::props::{CanonicalCombiningClass, DefaultIgnorableCodePoint};
+use icu_properties::props::{
+    CanonicalCombiningClass, ChangesWhenLowercased, DefaultIgnorableCodePoint,
+};
 use icu_properties::{CodePointMapData, CodePointSetData};
 
 fn ignorable(c: char) -> bool {
@@ -19,6 +21,12 @@ pub(crate) fn normalize(text: &str) -> Cow<'_, str> {
     if text.is_ascii() {
         return Cow::Borrowed(text);
     }
+    if !text.chars().any(ignorable) {
+        let normalized = ComposingNormalizerBorrowed::new_nfkc().normalize(text);
+        if !normalized.chars().any(ignorable) {
+            return normalized;
+        }
+    }
     let stripped: String = text.chars().filter(|c| !ignorable(*c)).collect();
     Cow::Owned(nfkc_stripped(&stripped))
 }
@@ -30,6 +38,32 @@ fn nfkc_stripped(stripped: &str) -> String {
         .chars()
         .filter(|c| !ignorable(*c))
         .collect()
+}
+
+/// ASCII may be folded by the candidate automaton. Every other character must be
+/// inert under normalization and unchanged by lowercase; otherwise use the full scan.
+/// Inert characters cannot compose with their ASCII neighbors either.
+pub(crate) fn candidate_text_is_stable(text: &str) -> bool {
+    if text.is_ascii() {
+        return true;
+    }
+    use std::sync::OnceLock;
+    static STABLE: OnceLock<Box<[bool]>> = OnceLock::new();
+    let stable = STABLE.get_or_init(|| {
+        #[allow(deprecated)]
+        // ICU's derived inertness property is exactly the normalization guarantee needed here.
+        let inert = CodePointSetData::new::<icu_properties::props::NfkcInert>();
+        (0..=0x10ffff)
+            .map(|cp| {
+                char::from_u32(cp).is_some_and(|c| {
+                    inert.contains(c)
+                        && !ignorable(c)
+                        && !CodePointSetData::new::<ChangesWhenLowercased>().contains(c)
+                })
+            })
+            .collect()
+    });
+    text.chars().all(|c| c.is_ascii() || stable[c as usize])
 }
 
 /// Already-normalized text in lower case, for a rule that ignores case.

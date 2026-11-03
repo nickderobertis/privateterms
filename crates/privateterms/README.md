@@ -96,3 +96,21 @@ consume:
 
 Pre-1.0: a breaking change to the public API is a minor release. `SPEC_VERSION` names the
 specification version the crate implements.
+
+## Benchmark
+
+Run `cargo bench -p privateterms --bench clean_runs --locked` from the repository.
+It reports median times and their ratio for visiting characters versus calling `hits`
+on the same 75,084 clean printable runs (over 2.5 MiB, at least one third containing non-ASCII),
+with 60 private terms. One run in twenty carries a case or normalization variant
+of a term fragment, never a complete term. Matcher construction and an initial correctness/warmup pass
+are outside the timings. Each sample averages 20 passes; the report takes the median
+of 21 samples, alternating which side runs first to reduce host-load bias.
+There is no wall-clock assertion.
+
+Clean ASCII and Unicode text whose characters are inert under NFKC and unchanged by
+lowercasing can use a conservative candidate search without normalization or span
+mapping. Other Unicode text follows the full normalization path. The Unicode safety
+lookup is shared across matchers and initialized once on its first use (about 1 MiB
+of process memory); the benchmark's warmup includes that initialization. A reported
+hit still uses the original normalization/span mapping, including its widening rules.
