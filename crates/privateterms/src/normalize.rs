@@ -233,3 +233,78 @@ pub(crate) fn in_normalized(normalized: &str, (ps, pe): (usize, usize)) -> Optio
     }
     None
 }
+
+/// Necessary decomposed character sets, tested before allocating normalized text.
+/// Canonical decomposition makes composition across input characters irrelevant.
+pub(crate) struct Contributors {
+    table: Box<[u64]>,
+    required: Vec<u64>,
+}
+
+impl Contributors {
+    pub(crate) fn new(terms: impl Iterator<Item = String>) -> Self {
+        use icu_normalizer::DecomposingNormalizerBorrowed;
+        use std::sync::OnceLock;
+        static SOURCES: OnceLock<HashMap<char, Vec<usize>>> = OnceLock::new();
+        use std::collections::HashMap;
+        let decomposition = DecomposingNormalizerBorrowed::new_nfkd();
+        let sources = SOURCES.get_or_init(|| {
+            let mut sources: HashMap<char, Vec<usize>> = HashMap::new();
+            for cp in 0..=0x10ffff {
+                if let Some(c) = char::from_u32(cp).filter(|c| !ignorable(*c)) {
+                    for d in decomposition.normalize_iter(std::iter::once(c)) {
+                        for lower in d.to_lowercase() {
+                            if lower != c {
+                                sources.entry(lower).or_default().push(cp as usize);
+                            }
+                            // String lowercasing also produces final sigma contextually.
+                            if lower == 'σ' {
+                                sources.entry('ς').or_default().push(cp as usize);
+                            }
+                        }
+                    }
+                }
+            }
+            sources
+        });
+        let mut table = vec![0u64; 0x110000].into_boxed_slice();
+        // At most 64 distinct alphabetic components are tracked. Dropping further
+        // requirements only admits extra candidates; it cannot hide a hit. Terms
+        // without tracked components have a zero mask and always take the full path.
+        let mut bits = HashMap::new();
+        let mut required = Vec::new();
+        for term in terms {
+            let mut mask = 0;
+            for c in decomposition
+                .normalize_iter(term.chars())
+                .filter(|c| c.is_alphabetic())
+            {
+                let next = bits.len();
+                if next >= 64 && !bits.contains_key(&c) {
+                    continue;
+                }
+                let bit = *bits.entry(c).or_insert(1u64 << next.min(63));
+                mask |= bit;
+            }
+            required.push(mask);
+        }
+        for (c, bit) in bits {
+            table[c as usize] |= bit;
+            if let Some(contributors) = sources.get(&c) {
+                for &cp in contributors {
+                    table[cp] |= bit;
+                }
+            }
+        }
+        required.sort_unstable();
+        required.dedup();
+        Self { table, required }
+    }
+
+    pub(crate) fn possible(&self, text: &str) -> bool {
+        let seen = text
+            .chars()
+            .fold(0, |seen, c| seen | self.table[c as usize]);
+        self.required.iter().any(|mask| seen & mask == *mask)
+    }
+}

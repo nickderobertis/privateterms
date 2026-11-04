@@ -12,7 +12,7 @@ fn measure(mut visit: impl FnMut()) -> Duration {
     start.elapsed() / 20
 }
 
-fn main() {
+fn benchmark(unstable: bool) {
     let runs: Vec<String> = (0..75_084)
         .map(|i| {
             let mut run = match i % 3 {
@@ -20,6 +20,12 @@ fn main() {
                 1 => format!("模型 部件 {i:06} 三角形 顶点"),
                 _ => format!("surface mesh {i:06} facet normal"),
             };
+            if unstable {
+                run = format!("模型 mesh {i:06} 木 三角形");
+            }
+            if unstable && i % 5 < 3 {
+                run.push_str(" ＡＢＣ\u{301}\u{200d}Ω");
+            }
             if i % 1000 == 0 {
                 run.push_str(" ｚｕｂｒｏｗ");
             } else if i % 20 == 0 {
@@ -28,7 +34,7 @@ fn main() {
             run
         })
         .collect();
-    let terms: Vec<String> = (0..60)
+    let terms: Vec<String> = (0..if unstable { 2_000 } else { 60 })
         .map(|i| match i % 3 {
             0 => format!("Quillmoss Workshop {i}"),
             1 => format!("VÉLORIN {i}"),
@@ -82,11 +88,19 @@ fn main() {
     let baseline = baseline_samples[baseline_samples.len() / 2];
     let scan = scan_samples[scan_samples.len() / 2];
     println!(
-        "{} bytes, {} runs ({} non-ASCII), 60 terms, {} near-miss runs\nvisit: {baseline:?}\nmatcher: {scan:?}\nratio: {:.3}x",
+        "{} bytes, {} runs ({} non-ASCII), {} terms, {} near-miss runs\nvisit: {baseline:?}\nmatcher: {scan:?}\nratio: {:.3}x",
         runs.iter().map(String::len).sum::<usize>(),
         runs.len(),
         runs.iter().filter(|run| !run.is_ascii()).count(),
+        matcher.rules().len(),
         (0..runs.len()).filter(|i| i % 20 == 0).count(),
         scan.as_secs_f64() / baseline.as_secs_f64(),
     );
+}
+
+fn main() {
+    println!("Earlier clean benchmark:");
+    benchmark(false);
+    println!("Unstable benchmark:");
+    benchmark(true);
 }
