@@ -16,7 +16,8 @@ use serde::{Deserialize, Serialize};
 use crate::error::{ReplacementCarriesTerm, Unbuildable};
 use crate::locator::{Locator, LocatorKind};
 use crate::normalize::{
-    candidate_text_is_stable, fold, in_normalized, normalize, term_key, unfold, Mapped,
+    candidate_text_is_stable, fold, in_normalized, normalize, term_key, unfold, Contributors,
+    Mapped,
 };
 use crate::resolve::{Action, ResolvedRule};
 use crate::TermMode;
@@ -48,6 +49,7 @@ pub struct Matcher {
     rules: Vec<ResolvedRule>,
     /// A conservative candidate search on stable text, ignoring ASCII case.
     candidates: AhoCorasick,
+    contributors: Contributors,
     /// The automaton over every rule that ignores case, matched against folded text.
     folded: Option<Automaton>,
     /// The automaton over every case-sensitive rule, matched against normalized text.
@@ -116,7 +118,9 @@ impl Matcher {
             .map_err(|error| Unbuildable {
                 reason: error.to_string(),
             })?;
+        let contributors = Contributors::new(rules.iter().map(|r| term_key(&r.rule.term)));
         Ok(Matcher {
+            contributors,
             candidates,
             folded: Automaton::build(folded)?,
             exact: Automaton::build(exact)?,
@@ -297,6 +301,9 @@ impl Matcher {
     fn scan(&self, text: &str) -> Vec<Found> {
         let mut found = Vec::new();
         if self.folded.is_none() && self.exact.is_none() {
+            return found;
+        }
+        if !self.contributors.possible(text) {
             return found;
         }
         if !self.candidates.is_match(text) && candidate_text_is_stable(text) {

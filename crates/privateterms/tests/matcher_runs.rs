@@ -86,3 +86,83 @@ fn mixed_runs_keep_original_spans_and_do_not_carry_state() {
         }
     }
 }
+
+#[test]
+fn unstable_clean_runs_and_normalized_candidates_keep_original_spans() {
+    let matcher = matcher();
+    for text in [
+        "ＡＢＣ\u{301}\u{200d}Ω",
+        "\u{ad}\u{200d}\u{feff}",
+        "ΩΩ ＢＢ 木",
+    ] {
+        assert!(matcher.hits(text).is_empty());
+    }
+    for (text, expected) in [
+        ("\u{200d}ＱＵＩＬＬＭＯＳＳ", 3..30),
+        ("Ａ\u{301} Ω quill\u{200d}moss Ｂ", 9..21),
+    ] {
+        let hits = matcher.hits(text);
+        assert_eq!(
+            hits.iter().find(|hit| hit.rule == 0).unwrap().span,
+            expected
+        );
+    }
+}
+
+#[test]
+fn contextual_lowercase_and_composition_can_supply_candidates() {
+    for (term, text) in [("ος", "ΟΣ"), ("é", "e\u{301}"), ("가", "ᄀ\u{200d}ᅡ")] {
+        let matcher = Matcher::new(
+            vec![ResolvedRule {
+                rule: TermRule {
+                    term: term.to_owned(),
+                    mode: TermMode::Substring,
+                    case_sensitive: false,
+                },
+                action: Action::Reject,
+                origin: "test".to_owned(),
+            }],
+            &[],
+        )
+        .unwrap();
+        assert_eq!(
+            matcher.hits(text),
+            vec![Hit {
+                rule: 0,
+                span: 0..text.len()
+            }]
+        );
+    }
+}
+
+#[test]
+fn untracked_components_and_terms_without_letters_still_match() {
+    let terms: Vec<String> = (0x400..0x460)
+        .filter_map(char::from_u32)
+        .map(|c| c.to_string())
+        .chain(["123".to_owned(), "!!!".to_owned()])
+        .collect();
+    let matcher = Matcher::new(
+        terms
+            .iter()
+            .map(|term| ResolvedRule {
+                rule: TermRule {
+                    term: term.clone(),
+                    mode: TermMode::Substring,
+                    case_sensitive: true,
+                },
+                action: Action::Reject,
+                origin: "test".to_owned(),
+            })
+            .collect(),
+        &[],
+    )
+    .unwrap();
+    for (rule, term) in terms.iter().enumerate() {
+        assert!(matcher.hits(term).contains(&Hit {
+            rule,
+            span: 0..term.len()
+        }));
+    }
+    assert!(matcher.hits("ＡＢＣ").is_empty());
+}
