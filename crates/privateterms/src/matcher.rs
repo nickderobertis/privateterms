@@ -303,6 +303,9 @@ impl Matcher {
         if self.folded.is_none() && self.exact.is_none() {
             return found;
         }
+        if text.is_ascii() && !self.candidates.is_match(text) {
+            return found;
+        }
         if !self.contributors.possible(text) {
             return found;
         }
