@@ -5,6 +5,12 @@ from the Conventional Commits a release carries.
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/nickderobertis/privateterms/compare/v0.1.1...v0.1.2) - 2026-11-04
+
+### Performance
+
+- *(matcher)* clear clean non-ASCII text without normalizing it ([#10](https://github.com/nickderobertis/privateterms/pull/10))
+
 ## [0.1.1](https://github.com/nickderobertis/privateterms/compare/v0.1.0...v0.1.1) - 2026-11-03
 
 ### Performance

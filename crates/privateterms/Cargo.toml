@@ -1,6 +1,6 @@
 [package]
 name = "privateterms"
-version = "0.1.1"
+version = "0.1.2"
 description = "The Rust SDK of the private-terms specification: declare private terms, then detect, replace or reject them in public text."
 readme = "README.md"
 keywords = ["privacy", "redaction", "terms", "boundary", "unicode"]
