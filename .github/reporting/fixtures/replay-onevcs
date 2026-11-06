@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""Answer `onevcs host` from saved telemetry, through the figures script's ONEVCS boundary.
+
+To take `privateterms-ci-job-count` over the replay, from the repository root:
+  ONEVCS=$PWD/.github/reporting/fixtures/replay-onevcs GITHUB_REPOSITORY=owner/repo \
+    GITHUB_REF_TYPE=tag GITHUB_REF_NAME=v0.0.1 \
+    bunx onebudgetspec check budgets.yaml --id privateterms-ci-job-count
+
+REPLAY_HOST_ANSWERS names another answers file; REPLAY_HOST_LOG collects the questions asked.
+"""
+import json
+import os
+import sys
+from pathlib import Path
+
+arguments = sys.argv[1:]
+if arguments[:1] != ["host"] or len(arguments) < 2:
+    sys.exit(f"replay-onevcs answers `host QUERY`, got: {arguments}")
+query = arguments[1]
+key = query
+for flag in ("--change", "--run"):
+    if flag in arguments:
+        key = f"{query} {arguments[arguments.index(flag) + 1]}"
+if log := os.environ.get("REPLAY_HOST_LOG"):
+    with open(log, "a", encoding="utf-8") as saved:
+        saved.write(key + "\n")
+default = Path(__file__).with_name("replayed-host.json")
+answers = json.loads(Path(os.environ.get("REPLAY_HOST_ANSWERS", default)).read_text(encoding="utf-8"))
+if key not in answers:
+    sys.exit(f"replay-onevcs holds no answer for: {key}")
+print(json.dumps(answers[key]))

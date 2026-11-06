@@ -1,8 +1,9 @@
 // Hold the Nx project graph to its tags: a `type:contract` project (the specification
 // and the conformance suite) depends on nothing, so no change to the crate or its e2e
 // tier can reach it; `type:library` depends only on contracts; `type:e2e` only on the
-// library it drives. Every project declares a recognized type tag. Node built-ins only;
-// quiet on success.
+// library it drives; `type:budgets` (the workflow and report-job tests) only on the root and
+// each other. Every project declares a recognized type tag. Node built-ins only; quiet on
+// success.
 import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -12,6 +13,7 @@ const allowed = {
   "type:library": ["type:contract"],
   "type:e2e": ["type:library"],
   "type:workspace": [],
+  "type:budgets": ["type:workspace", "type:budgets"],
 };
 const skip = new Set(["node_modules", "target", ".git", ".nx"]);
 const projects = new Map();
