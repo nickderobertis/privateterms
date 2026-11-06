@@ -9,7 +9,9 @@ telemetry for `privateterms-budget-report-command-seconds` and its full REST fig
 
 import json
 import os
+import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -64,13 +66,41 @@ COMMITS = 20
 COMMANDS_READING_REST = 12
 DESIGN_REQUESTS = 20
 TELEMETRY = HERE / ".telemetry"
+# A `gh` holding no token for its host reads the keyring, which autolaunches a session bus: a daemon
+# that outlives the job and keeps one of the host's inotify instances. This value stops the launch.
+SESSION_BUS = "DBUS_SESSION_BUS_ADDRESS"
+DBUS_LAUNCH_CALLS = "dbus-launch-calls"
 
 
 def runner_path(directory: Path) -> str:
     """What a hosted runner gives a budget command: no uv, cargo, bun or onevcs."""
     directory.mkdir()
     (directory / "node").symlink_to(shutil.which("node"))
+    # Ahead of /usr/bin's real one, so a `gh` that asks for a bus is recorded and starts nothing.
+    stand_in = directory / "dbus-launch"
+    calls = shlex.quote(str(directory / DBUS_LAUNCH_CALLS))
+    stand_in.write_text(f"#!/bin/sh\necho asked >> {calls}\nexit 1\n")
+    stand_in.chmod(0o755)
     return f"{directory}{os.pathsep}/usr/bin{os.pathsep}/bin"
+
+
+def bus_requests(directory: Path) -> int:
+    """How many times a `gh` on `runner_path(directory)` has asked for a session bus."""
+    calls = directory / DBUS_LAUNCH_CALLS
+    return len(calls.read_text().splitlines()) if calls.exists() else 0
+
+
+def job_environment(counts: Path, path: str, run_id: int) -> dict:
+    """What a journey adds to the harness's environment for every step of its job."""
+    return {
+        "JOURNEY_COUNTS": str(counts),
+        "PATH": path,
+        SESSION_BUS: "disabled:",
+        # What a runner sets for every step, which the figures script reads.
+        "GITHUB_REPOSITORY": harness.REPOSITORY,
+        "GITHUB_RUN_ID": str(run_id),
+        "RUNNER_NAME": "hosted-runner",
+    }
 
 
 def tracked_files() -> list[str]:
@@ -113,7 +143,8 @@ class Journey(unittest.TestCase):
         self.addCleanup(scratch.cleanup)
         self.scratch = Path(scratch.name)
         self.counts = self.scratch / "counts"
-        self.path = runner_path(self.scratch / "runner-bin")
+        self.runner_bin = self.scratch / "runner-bin"
+        self.path = runner_path(self.runner_bin)
         self.next_run = 1000
         for name in tracked_files():
             source, target = ROOT / name, self.repository.path / name
@@ -124,6 +155,13 @@ class Journey(unittest.TestCase):
         self.repository.write("tests/fixtures/budgets.yaml", "not: a budgets file\n")
         self.repository.write("conformance/case/budgets.yaml", "not: a budgets file\n")
         self.base_sha = self.repository.commit("the tree")
+
+    def tearDown(self):
+        self.assertEqual(
+            bus_requests(self.runner_bin),
+            0,
+            f"a `gh` of this job asked for a session bus: keep {SESSION_BUS} in its environment",
+        )
 
     def inputs(self) -> dict:
         given = dict(released_action.action_step(released_action.workflow())["with"])
@@ -141,14 +179,7 @@ class Journey(unittest.TestCase):
             sha,
             inputs=options.pop("inputs", self.inputs()),
             run_id=run_id,
-            environment={
-                "JOURNEY_COUNTS": str(self.counts),
-                "PATH": self.path,
-                # What a runner sets for every step, which the figures script reads.
-                "GITHUB_REPOSITORY": harness.REPOSITORY,
-                "GITHUB_RUN_ID": str(run_id),
-                "RUNNER_NAME": "hosted-runner",
-            },
+            environment=job_environment(self.counts, self.path, run_id),
             **options,
         )
         self.addCleanup(job.close)
@@ -486,6 +517,58 @@ class OrdinaryCatalog(Journey):
         self.assertEqual(self.host.comments, [])
         self.assertIn("not delivered", job.summary)
         self.assertIsNotNone(self.host.artifact_files(job.run_id))
+
+
+class SessionBus(unittest.TestCase):
+    """The job's environment, handed to the real `gh` at a loopback port that refuses it."""
+
+    def test_the_job_environment_keeps_a_tokenless_gh_from_asking_for_a_bus(self):
+        if sys.platform != "linux" or shutil.which("gh") is None:
+            self.skipTest("only `gh` on Linux can autolaunch a session bus")
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            socket.socket() as refusing,
+        ):
+            scratch = Path(directory)
+            runner_bin = scratch / "runner-bin"
+            path = runner_path(runner_bin)
+            refusing.bind(("127.0.0.1", 0))
+            port = str(refusing.getsockname()[1])
+            # No GH_TOKEN: a step adds its own, an empty one asks, and so does any call without it.
+            environment = {
+                "HOME": directory,
+                **harness.real_gh_environment(f"http://127.0.0.1:{port}", directory),
+                **job_environment(scratch / "counts", path, 1),
+            }
+
+            def requests_of(given: dict) -> int:
+                before = bus_requests(runner_bin)
+                done = subprocess.run(
+                    [
+                        shutil.which("gh"),
+                        "api",
+                        "repos/owner/repo/commits/main",
+                    ],
+                    env=given,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertIn(port, done.stderr, "`gh` reached only the loopback port")
+                return bus_requests(runner_bin) - before
+
+            without = dict(environment)
+            without.pop(SESSION_BUS, None)
+            if requests_of(without) == 0:
+                self.skipTest(
+                    "the installed `gh` no longer asks for a session bus without "
+                    f"{SESSION_BUS}, so none can leak"
+                )
+            self.assertEqual(
+                requests_of(environment),
+                0,
+                f"the job's environment must carry {SESSION_BUS}=disabled:",
+            )
 
 
 class ReplayedFigures(unittest.TestCase):
