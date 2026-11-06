@@ -266,11 +266,27 @@ class ProductionCatalog(Journey):
         self.assert_no_figure_fakes_a_verdict(base)
         base_files = self.host.artifact_files(base.run_id)
         pull_files = self.host.artifact_files(pull.run_id)
-        self.assertEqual(set(base_files), set(pull_files))
+        self.assertEqual(set(base_files), {*pull_files, "rolling-history.json"})
         self.assertEqual(set(self.saved(base)), set(self.saved(pull)))
-        # Only the own budget measures here, after the main upload, so no base run of this catalog
-        # has a measurement to carry: its row stays without a baseline, with this reason.
-        self.assertIn("no rolling file saved", base.markdown())
+
+    def test_a_base_push_saves_the_own_budget_and_a_later_pull_request_reads_it(self):
+        base = self.base_push()
+        self.assertEqual(base.exit_code, 0, base.stdout)
+        # The own budget measures after the main upload, so only the final upload's history holds it.
+        history = json.loads(
+            self.host.artifact_files(base.run_id)["rolling-history.json"].decode()
+        )
+        self.assertEqual([run["head_sha"] for run in history["runs"]], [base.sha])
+        saved = {
+            result["id"]: result for result in history["runs"][0]["results"]["results"]
+        }
+        self.assertEqual(set(saved), {OWN_BUDGET})
+        self.assertEqual(saved[OWN_BUDGET]["verdict"], "within")
+
+        pull = self.pull_request()
+        self.assertEqual(pull.exit_code, 0, pull.stdout)
+        self.assertEqual(pull.rows()[OWN_BUDGET]["baseline_n"], 1)
+        self.assertIn(" | 1 | ", one_row(self.host.comments[0]["body"], OWN_BUDGET))
 
     def test_a_fork_gets_its_summary_and_artifact_with_no_comment_or_credential(self):
         self.assertEqual(self.base_push().exit_code, 0)
