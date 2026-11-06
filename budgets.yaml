@@ -5,6 +5,9 @@
 # from onevcs's read-only answers, as the last step of release.yml's `publish` job, whose
 # result nothing reads. The eighth, `host-variable`, is the local gate's wall clock, which
 # `just gate` checks as a warning. The strict check `just check` runs excludes both labels.
+# ci.yml's `budgets` job reports all eight beside .github/reporting/budgets.yaml without enforcing
+# them, and the CD figures name that job's workflow with --exclude-workflow: its push run at the
+# release commit delivers nothing.
 # references/ci.md ("CI and CD time budgets") states why each line is where it is.
 schema_version: 1
 budgets:
@@ -24,7 +27,7 @@ budgets:
   # llmlint: ignore[budgets_track_product_owner_outcomes] The brief requires a 30-minute line per CI check and per CD job beside the 90-minute release cycle that contains them, job counts per PR push and per release, and GitHub reads per release and per pull request; the skill ships the same eight budgets the three repositories register.
   - id: privateterms-cd-job-time
     measure: reported
-    command: [bash, scripts/actions-budget-figures.sh, longest-job, --stage, cd]
+    command: [bash, scripts/actions-budget-figures.sh, longest-job, --stage, cd, --exclude-workflow, ci]
     unit: seconds
     direction: max
     threshold: 1800
@@ -52,16 +55,17 @@ budgets:
     command: [bash, scripts/actions-budget-figures.sh, job-count, --stage, pr]
     unit: jobs
     direction: max
-    threshold: 4
+    threshold: 5
     labels: [release-tail]
     description: >-
       The most counted jobs any pull request of one release ran at its last commit, over
       every workflow its pull_request event started. It protects this repository's share
-      of the account-wide 20-job concurrency limit: `lint`, `test-linux`, `test-windows` and `test-macos`.
+      of the account-wide 20-job concurrency limit: `lint`, `test-linux`, `test-windows`,
+      `test-macos` and `budgets`.
   # llmlint: ignore[budgets_track_product_owner_outcomes] The brief requires a 30-minute line per CI check and per CD job beside the 90-minute release cycle that contains them, job counts per PR push and per release, and GitHub reads per release and per pull request; the skill ships the same eight budgets the three repositories register.
   - id: privateterms-cd-job-count
     measure: reported
-    command: [bash, scripts/actions-budget-figures.sh, job-count, --stage, cd]
+    command: [bash, scripts/actions-budget-figures.sh, job-count, --stage, cd, --exclude-workflow, ci]
     unit: jobs
     direction: max
     threshold: 6
@@ -73,7 +77,7 @@ budgets:
   # llmlint: ignore[budgets_track_product_owner_outcomes] The brief requires a 30-minute line per CI check and per CD job beside the 90-minute release cycle that contains them, job counts per PR push and per release, and GitHub reads per release and per pull request; the skill ships the same eight budgets the three repositories register.
   - id: privateterms-release-read-requests
     measure: reported
-    command: [bash, scripts/actions-budget-figures.sh, release-read-requests]
+    command: [bash, scripts/actions-budget-figures.sh, release-read-requests, --exclude-workflow, ci]
     unit: requests
     direction: max
     threshold: 6

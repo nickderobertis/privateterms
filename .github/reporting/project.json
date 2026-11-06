@@ -1,0 +1,39 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "report-job",
+  "tags": ["type:budgets"],
+  "implicitDependencies": ["github-workflows", "workspace"],
+  "targets": {
+    "format": {
+      "command": "uvx ruff@0.17.4 format --check .github/reporting",
+      "options": { "cwd": "{workspaceRoot}" },
+      "cache": true
+    },
+    "lint": {
+      "command": "uvx ruff@0.17.4 check .github/reporting",
+      "options": { "cwd": "{workspaceRoot}" },
+      "cache": true
+    },
+    "test": {
+      "command": "uv run --no-project --quiet --with pyyaml==6.0.3 python .github/reporting/test_report_job.py",
+      "options": { "cwd": "{workspaceRoot}" },
+      "inputs": [
+        "default",
+        "!{projectRoot}/.telemetry/**/*",
+        "{workspaceRoot}/.github/workflows/ci.yml",
+        "{workspaceRoot}/.github/workflows/tests/released_action.py",
+        "{workspaceRoot}/budgets.yaml",
+        "{workspaceRoot}/scripts/actions-budget-figures.sh",
+        "{workspaceRoot}/scripts/gate-time-budget.mjs"
+      ],
+      "outputs": ["{projectRoot}/.telemetry"],
+      "cache": true
+    },
+    "budgets": {
+      "command": "PATH=\"$PWD/.github/reporting/.telemetry/tools:$PWD/node_modules/.bin:$PATH\" onebudgetspec check .github/reporting/budgets.yaml",
+      "options": { "cwd": "{workspaceRoot}" },
+      "dependsOn": ["test"],
+      "cache": false
+    }
+  }
+}

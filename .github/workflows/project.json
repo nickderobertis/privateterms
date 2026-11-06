@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "github-workflows",
+  "tags": ["type:budgets"],
+  "implicitDependencies": ["workspace"],
+  "targets": {
+    "format": {
+      "command": "uvx ruff@0.17.4 format --check .github/workflows",
+      "options": { "cwd": "{workspaceRoot}" },
+      "cache": true
+    },
+    "lint": {
+      "command": "uvx ruff@0.17.4 check .github/workflows",
+      "options": { "cwd": "{workspaceRoot}" },
+      "cache": true
+    },
+    "test": {
+      "command": "uv run --no-project --quiet --with pyyaml==6.0.3 python .github/workflows/tests/test_ci_workflow.py",
+      "options": { "cwd": "{workspaceRoot}" },
+      "inputs": [
+        "default",
+        "{workspaceRoot}/budgets.yaml",
+        "{workspaceRoot}/.github/governance.json"
+      ],
+      "cache": true
+    }
+  }
+}

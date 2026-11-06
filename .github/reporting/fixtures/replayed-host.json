@@ -1,0 +1,370 @@
+{
+ "_provenance": "Replayed host telemetry, never live CI. The four platform jobs are the scrubbed metadata of one real run of this repository in spike-history's recordings (their names, conclusions and timestamps; ids, shas and runner names replaced). The budgets job and every release answer are synthetic, shaped like the finished workflows.",
+ "release-changes": {
+  "schema_version": 1,
+  "repository": "owner/repo",
+  "tag": "v0.0.1",
+  "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "previous_tag": "v0.0.0",
+  "previous_commit": "cccccccccccccccccccccccccccccccccccccccc",
+  "commits": [
+   {
+    "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "change": 1
+   }
+  ],
+  "changes": [
+   {
+    "number": 1,
+    "title": "change",
+    "state": "closed",
+    "base_ref": "main",
+    "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "created_at": "2026-11-03T00:00:56Z",
+    "merged_at": "2026-11-03T01:00:00Z",
+    "merge_commit_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+  ],
+  "cost": {
+   "graphql_points": 0,
+   "rest_requests": 2,
+   "requests": [
+    "GET compare",
+    "GET pulls"
+   ]
+  }
+ },
+ "change-checks 1": {
+  "schema_version": 1,
+  "repository": "owner/repo",
+  "change": {
+   "number": 1,
+   "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "merged_at": "2026-11-03T01:00:00Z"
+  },
+  "runs": [
+   {
+    "id": 1001,
+    "workflow_id": 1001,
+    "workflow_name": "ci",
+    "event": "pull_request",
+    "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-11-03T00:00:56Z",
+    "updated_at": "2026-11-03T00:00:56Z",
+    "jobs": [
+     {
+      "id": 100100,
+      "run_id": 1001,
+      "run_attempt": 1,
+      "name": "lint",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions",
+      "runner_os": "Linux",
+      "labels": [
+       "ubuntu-latest"
+      ],
+      "created_at": "2026-11-03T00:00:56Z",
+      "started_at": "2026-11-03T00:00:56Z",
+      "completed_at": "2026-11-03T00:05:16Z"
+     },
+     {
+      "id": 100101,
+      "run_id": 1001,
+      "run_attempt": 1,
+      "name": "test-linux",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions",
+      "runner_os": "Linux",
+      "labels": [
+       "ubuntu-latest"
+      ],
+      "created_at": "2026-11-03T00:00:55Z",
+      "started_at": "2026-11-03T00:00:55Z",
+      "completed_at": "2026-11-03T00:01:46Z"
+     },
+     {
+      "id": 100102,
+      "run_id": 1001,
+      "run_attempt": 1,
+      "name": "test-macos",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions",
+      "runner_os": "macOS",
+      "labels": [
+       "macos-latest"
+      ],
+      "created_at": "2026-11-03T00:21:36Z",
+      "started_at": "2026-11-03T00:21:36Z",
+      "completed_at": "2026-11-03T00:22:36Z"
+     },
+     {
+      "id": 100103,
+      "run_id": 1001,
+      "run_attempt": 1,
+      "name": "test-windows",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions",
+      "runner_os": "Windows",
+      "labels": [
+       "windows-latest"
+      ],
+      "created_at": "2026-11-03T00:00:55Z",
+      "started_at": "2026-11-03T00:00:55Z",
+      "completed_at": "2026-11-03T00:03:06Z"
+     },
+     {
+      "id": 100109,
+      "run_id": 1001,
+      "run_attempt": 1,
+      "name": "budgets",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions",
+      "runner_os": "Linux",
+      "labels": [
+       "ubuntu-latest"
+      ],
+      "created_at": "2026-11-03T00:22:36Z",
+      "started_at": "2026-11-03T00:22:36Z",
+      "completed_at": "2026-11-03T00:23:36Z"
+     }
+    ]
+   }
+  ],
+  "cost": {
+   "graphql_points": 0,
+   "rest_requests": 2,
+   "requests": [
+    "GET runs",
+    "GET jobs"
+   ]
+  }
+ },
+ "commit-runs": {
+  "schema_version": 1,
+  "repository": "owner/repo",
+  "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "events": [
+   "push",
+   "release"
+  ],
+  "runs": [
+   {
+    "id": 2000,
+    "workflow_id": 2000,
+    "workflow_name": "ci",
+    "event": "push",
+    "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-11-03T01:00:00Z",
+    "updated_at": "2026-11-03T01:00:00Z"
+   },
+   {
+    "id": 2001,
+    "workflow_id": 2001,
+    "workflow_name": "Release-plz",
+    "event": "push",
+    "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-11-03T01:00:00Z",
+    "updated_at": "2026-11-03T01:00:00Z"
+   },
+   {
+    "id": 2002,
+    "workflow_id": 2002,
+    "workflow_name": "Release",
+    "event": "release",
+    "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-11-03T01:00:00Z",
+    "updated_at": "2026-11-03T01:00:00Z"
+   }
+  ],
+  "cost": {
+   "graphql_points": 0,
+   "rest_requests": 1,
+   "requests": [
+    "GET runs"
+   ]
+  }
+ },
+ "run-jobs 2000": {
+  "schema_version": 1,
+  "repository": "owner/repo",
+  "run_id": 2000,
+  "jobs": [
+   {
+    "id": 200000,
+    "run_id": 2000,
+    "run_attempt": 1,
+    "name": "budgets",
+    "workflow_name": "ci",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:01:00Z"
+   }
+  ],
+  "cost": {
+   "graphql_points": 0,
+   "rest_requests": 1,
+   "requests": [
+    "GET jobs"
+   ]
+  }
+ },
+ "run-jobs 2001": {
+  "schema_version": 1,
+  "repository": "owner/repo",
+  "run_id": 2001,
+  "jobs": [
+   {
+    "id": 200100,
+    "run_id": 2001,
+    "run_attempt": 1,
+    "name": "release-plz",
+    "workflow_name": "Release-plz",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:02:00Z"
+   }
+  ],
+  "cost": {
+   "graphql_points": 0,
+   "rest_requests": 1,
+   "requests": [
+    "GET jobs"
+   ]
+  }
+ },
+ "run-jobs 2002": {
+  "schema_version": 1,
+  "repository": "owner/repo",
+  "run_id": 2002,
+  "jobs": [
+   {
+    "id": 200201,
+    "run_id": 2002,
+    "run_attempt": 1,
+    "name": "build-linux",
+    "workflow_name": "Release",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:05:00Z"
+   },
+   {
+    "id": 200202,
+    "run_id": 2002,
+    "run_attempt": 1,
+    "name": "build-linux-arm64",
+    "workflow_name": "Release",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:05:00Z"
+   },
+   {
+    "id": 200203,
+    "run_id": 2002,
+    "run_attempt": 1,
+    "name": "build-macos",
+    "workflow_name": "Release",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:05:00Z"
+   },
+   {
+    "id": 200204,
+    "run_id": 2002,
+    "run_attempt": 1,
+    "name": "build-windows",
+    "workflow_name": "Release",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:05:00Z"
+   },
+   {
+    "id": 200205,
+    "run_id": 2002,
+    "run_attempt": 1,
+    "name": "publish",
+    "workflow_name": "Release",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_name": "GitHub Actions",
+    "runner_os": "Linux",
+    "labels": [
+     "ubuntu-latest"
+    ],
+    "created_at": "2026-11-03T01:00:00Z",
+    "started_at": "2026-11-03T01:00:00Z",
+    "completed_at": "2026-11-03T01:05:00Z"
+   }
+  ],
+  "cost": {
+   "graphql_points": 0,
+   "rest_requests": 1,
+   "requests": [
+    "GET jobs"
+   ]
+  }
+ }
+}

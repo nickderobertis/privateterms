@@ -1,0 +1,57 @@
+# A catalog of ordinary budgets the journeys install as a checkout's budgets.yaml: different units,
+# measures and commands, most without the job's label, one report-only and over its line, one whose
+# program no runner has and one reading a predecessor's saved telemetry.
+schema_version: 1
+budgets:
+  - id: fixture-bundle-bytes
+    description: The size of the invented bundle. It protects the download a reader waits on.
+    measure: reported
+    command: [bash, -c, 'echo "$ONEBUDGETSPEC_BUDGET_ID" >> "$JOURNEY_COUNTS"; echo "{\"value\": $(cat fixture-bundle-size)}" > "$ONEBUDGETSPEC_RESULT"']
+    unit: bytes
+    direction: max
+    threshold: 1000
+  - id: fixture-coverage-percent
+    description: The share of lines the tests reach. It protects against untested code landing.
+    measure: reported
+    command: [node, fixture-coverage.mjs]
+    unit: percent
+    direction: min
+    threshold: 80
+  - id: fixture-host-reads
+    description: The GitHub reads one run spends. It protects the rate limit other jobs share.
+    labels: [ci-report]
+    measure: reported
+    command: [bash, -c, 'echo "$ONEBUDGETSPEC_BUDGET_ID" >> "$JOURNEY_COUNTS"; gh api repos/owner/repo/commits/main > /dev/null || exit 1; echo "{\"value\": 1}" > "$ONEBUDGETSPEC_RESULT"']
+    unit: requests
+    direction: max
+    threshold: 5
+  - id: fixture-walltime
+    description: How long the smallest command takes. It protects a developer's fastest feedback.
+    measure: elapsed
+    command: [bash, -c, 'echo "$ONEBUDGETSPEC_BUDGET_ID" >> "$JOURNEY_COUNTS"']
+    unit: seconds
+    direction: max
+    threshold: 60
+  - id: fixture-laptop-figure
+    description: Startup work on a developer's machine. It protects local turnaround.
+    labels: [host-variable]
+    measure: reported
+    command: [bash, -c, 'echo "$ONEBUDGETSPEC_BUDGET_ID" >> "$JOURNEY_COUNTS"; echo "{\"value\": 50}" > "$ONEBUDGETSPEC_RESULT"']
+    unit: count
+    direction: max
+    threshold: 10
+  - id: fixture-needs-a-tool
+    description: Allocations in a measuring tool. It protects that tool's memory use.
+    labels: [ci-report]
+    measure: reported
+    command: [no-such-tool-on-this-runner, --measure]
+    unit: count
+    direction: max
+    threshold: 10
+  - id: fixture-needs-telemetry
+    description: Slow steps in the user journey. It protects the journey's responsiveness.
+    measure: reported
+    command: [node, fixture-coverage.mjs, .telemetry/predecessor.json]
+    unit: count
+    direction: max
+    threshold: 100

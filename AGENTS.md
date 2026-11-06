@@ -46,7 +46,11 @@ private terms identically.
   `conformance` and `spec` (`type:contract`, depending on nothing; the crate depends on
   both, so a case or rule change reruns its tests), `consumer` (`e2e/consumer`, the e2e
   tier: the packaged crate built and driven as a dependent gets it), and `workspace`
-  (the root: the dependency-ban fixture and the project-boundary check).
+  (the root: the dependency-ban fixture and the project-boundary check), plus
+  `github-workflows` (`.github/workflows`: ci.yml's job selection and its contract with the
+  released action) and `report-job` (`.github/reporting`: the budgets job, driven through the
+  released action, its budget and fixtures). Those two are `type:budgets`, run Linux-only
+  through `uv` (`just ci-test`), and fetch the pinned release into `target/report-job`.
   `scripts/check-project-boundaries.mjs` enforces the tags.
 - **Excluded, and why:** asdf/`.tool-versions` and direnv — rustup's
   `rust-toolchain.toml` pins the toolchain and nothing else needs a version manager; a
@@ -71,10 +75,12 @@ chain and times it. `just lint-llm-diff` is the judged tier, out of `check`.
   override. The PR title (Conventional Commits, linted in CI) becomes the squash subject
   and the PR body (`.github/pull_request_template.md`: What, Why) its body.
 - **Required checks** are exactly those in `.github/governance.json`: `lint` (format,
-  lint, the supply chain with the dependency bans, the PR title and llmlint) and
-  `test-linux`, `test-windows`, `test-macos`; branches need not be up to date.
+  lint, the supply chain with the dependency bans, the PR title and llmlint),
+  `test-linux`, `test-windows`, `test-macos` and `budgets`; branches need not be up to
+  date. The declaration leads: branch protection gains `budgets` only after the job lands.
 - **No broader-tier sweep runs in CI**: the composed CI/CD shape gates each pull request
-  at the affected tier and runs no CI on push to main; the release re-gates nothing.
+  at the affected tier, and a push to main runs only `budgets`, saving that commit's
+  results as the history pull requests compare with; the release re-gates nothing.
 - **Releases**: release-plz on every push to main opens the release PR (version,
   CHANGELOG.md) and arms auto-merge on it; when it merges, release-plz tags `v<version>`
   and cuts the GitHub Release, which runs `release.yml`: each `build-<platform>` job
@@ -105,3 +111,17 @@ chain and times it. `just lint-llm-diff` is the judged tier, out of `check`.
 
 When a routine command joins the workflow, add it to `.claude/settings.json` rather than
 re-approving it; keep the list narrow.
+
+## Budget reports
+
+Approved budget thresholds alone decide failures: the required `budgets` check goes
+red only on an ordinary budget verdict, and the budget stays the requirement. CI
+artifacts retain the base branch's recent measurements for informational comparison,
+and each report states their provenance, retention and coverage. A stored measurement
+is never a line to hold.
+
+1. When a performance problem appears that a failing budget check does not already identify (for example a CI timeout), read the PR report first through `onevcs change comments` or the host PR view. If the failing check already identifies it, skip the duplicate read. Read earlier PR comments and job results when several changes may contribute.
+2. Never time base versus branch on a shared host. Profile to investigate, and use CI comparisons through the repository's existing publication path.
+3. When reading a report or seeing a failing budget check, fix the regression as part of the work. For an adverse change of at least one standard deviation shown in a report being read (a `max` budget rising, a `min` budget falling), make the change cheaper or make room in existing code, profiling to find where. Improvements show numbers without flags, in a row's history too, and are no reason to optimize further, and other figures need no work. Informational flags do not fail a check or start other work.
+4. Stay inside existing budgets. Make room for new tests and code by speeding up existing work; never raise limits or timeouts.
+5. Suspect the current change first when something degrades, before intermittent slowness or the outside world.

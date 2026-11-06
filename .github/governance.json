@@ -3,7 +3,8 @@
     "lint",
     "test-linux",
     "test-windows",
-    "test-macos"
+    "test-macos",
+    "budgets"
   ],
   "strict": false
 }
