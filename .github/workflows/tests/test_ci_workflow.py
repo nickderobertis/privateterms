@@ -1,10 +1,17 @@
 """Which jobs ci.yml starts on which event, and its contract with the released action."""
 
+import hashlib
+import io
 import json
 import re
 import sys
+import tarfile
+import tempfile
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest import mock
 
 import yaml
 
@@ -237,6 +244,71 @@ class Workflow(unittest.TestCase):
         governance = json.loads((ROOT / ".github/governance.json").read_text())
         self.assertEqual(set(governance["required_checks"]), {*PREDECESSORS, "budgets"})
         self.assertIs(governance["strict"], False)
+
+
+class FetchingTheRelease(unittest.TestCase):
+    """The release fetch, with only the download doubled: Nx starts two fetches on a cold tree."""
+
+    TAG = "v9.9.9"
+    ARCHIVE = "onebudgetspec-github-action-9.9.9-x86_64-unknown-linux-gnu.tar.gz"
+    ACTION_YML = b"name: invented\n"
+
+    def setUp(self):
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        self.target = Path(scratch.name) / "report-job"
+        self.tree = self.target / f"action-{self.TAG}"
+
+    def downloads(self, sums_body=None, on_sums=lambda: None):
+        source = io.BytesIO()
+        with tarfile.open(fileobj=source, mode="w:gz") as archive:
+            member = tarfile.TarInfo(f"action-{self.TAG}/action.yml")
+            member.size = len(self.ACTION_YML)
+            archive.addfile(member, io.BytesIO(self.ACTION_YML))
+        assets = {self.ARCHIVE: b"invented archive", "action.yml": self.ACTION_YML}
+        sums = "".join(
+            f"{hashlib.sha256(body).hexdigest()}  {name}\n"
+            for name, body in assets.items()
+        )
+
+        def download(url):
+            name = url.rsplit("/", 1)[-1]
+            if name == "SHA256SUMS":
+                on_sums()
+                return (sums if sums_body is None else sums_body).encode()
+            return assets.get(name, source.getvalue())
+
+        return mock.patch.object(released_action, "_get", download)
+
+    def fetch(self):
+        released_action._fetch(self.TAG, self.tree, self.ARCHIVE)
+
+    def test_two_fetches_on_a_cold_tree_both_end_with_the_whole_release(self):
+        # Neither passes the checksums until both have started, so both reach the publish.
+        both_started = threading.Barrier(2, timeout=30)
+        with self.downloads(on_sums=both_started.wait), ThreadPoolExecutor(2) as pool:
+            for fetch in [pool.submit(self.fetch) for _ in range(2)]:
+                fetch.result()
+        self.assertEqual((self.tree / "action.yml").read_bytes(), self.ACTION_YML)
+        self.assertEqual(
+            (self.tree / "dist" / self.ARCHIVE).read_bytes(), b"invented archive"
+        )
+        self.assertEqual(
+            [path.name for path in self.target.iterdir()], [self.tree.name]
+        )
+
+    def test_a_fetch_that_fails_its_checksums_leaves_nothing_a_later_one_would_trust(
+        self,
+    ):
+        with (
+            self.downloads(sums_body="not the release\n"),
+            self.assertRaisesRegex(AssertionError, "is not what release"),
+        ):
+            self.fetch()
+        self.assertEqual(list(self.target.iterdir()), [])
+        with self.downloads():
+            self.fetch()
+        self.assertTrue((self.tree / "dist" / self.ARCHIVE).is_file())
 
 
 if __name__ == "__main__":

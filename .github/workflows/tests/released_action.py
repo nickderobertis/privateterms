@@ -10,6 +10,7 @@ import io
 import platform
 import shutil
 import tarfile
+import tempfile
 import urllib.request
 from pathlib import Path
 from types import ModuleType
@@ -53,25 +54,40 @@ def _get(url: str) -> bytes:
 
 
 def _fetch(tag: str, directory: Path, archive_name: str) -> None:
-    """Everything or nothing: a partial fetch never passes as the release."""
+    """Everything or nothing: a partial fetch never passes as the release.
+
+    Nx runs both of this release's test projects at once, so on a cold `target` two fetches race:
+    each builds in a directory of its own, and whichever publishes second keeps the first's tree,
+    which is the same immutable release.
+    """
     releases = f"https://github.com/{ACTION}/releases/download/{tag}"
-    partial = directory.with_name(f"{directory.name}.partial")
-    shutil.rmtree(partial, ignore_errors=True)
-    partial.mkdir(parents=True)
-    source = _get(f"https://codeload.github.com/{ACTION}/tar.gz/refs/tags/{tag}")
-    with tarfile.open(fileobj=io.BytesIO(source)) as archive:
-        for member in archive.getmembers():
-            member.name = member.name.split("/", 1)[-1]
-            archive.extract(member, partial, filter="data")
-    sums = _get(f"{releases}/SHA256SUMS").decode()
-    assets = {name: _get(f"{releases}/{name}") for name in (archive_name, "action.yml")}
-    for name, body in assets.items():
-        listed = f"{hashlib.sha256(body).hexdigest()}  {name}"
-        assert listed in sums.splitlines(), f"{name} is not what release {tag} lists"
-    assert assets["action.yml"] == (partial / "action.yml").read_bytes()
-    (partial / "dist").mkdir()
-    (partial / "dist" / archive_name).write_bytes(assets[archive_name])
-    partial.rename(directory)
+    directory.parent.mkdir(parents=True, exist_ok=True)
+    partial = Path(tempfile.mkdtemp(dir=directory.parent, prefix=f"{directory.name}."))
+    try:
+        source = _get(f"https://codeload.github.com/{ACTION}/tar.gz/refs/tags/{tag}")
+        with tarfile.open(fileobj=io.BytesIO(source)) as archive:
+            for member in archive.getmembers():
+                member.name = member.name.split("/", 1)[-1]
+                archive.extract(member, partial, filter="data")
+        sums = _get(f"{releases}/SHA256SUMS").decode()
+        assets = {
+            name: _get(f"{releases}/{name}") for name in (archive_name, "action.yml")
+        }
+        for name, body in assets.items():
+            listed = f"{hashlib.sha256(body).hexdigest()}  {name}"
+            assert listed in sums.splitlines(), (
+                f"{name} is not what release {tag} lists"
+            )
+        assert assets["action.yml"] == (partial / "action.yml").read_bytes()
+        (partial / "dist").mkdir()
+        (partial / "dist" / archive_name).write_bytes(assets[archive_name])
+        try:
+            partial.rename(directory)
+        except OSError:
+            if not directory.is_dir():
+                raise
+    finally:
+        shutil.rmtree(partial, ignore_errors=True)
 
 
 def load() -> Released:
