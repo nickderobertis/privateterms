@@ -70,6 +70,7 @@ def evaluate(expression, github):
     text = text.replace("&&", " and ").replace("||", " or ").replace("!(", " not (")
     names = {
         "lookup": lookup,
+        "true": True,
         "always": lambda: True,
         "startsWith": lambda value, prefix: str(value or "").startswith(prefix),
     }
