@@ -79,8 +79,8 @@ chain and times it. `just lint-llm-diff` is the judged tier, out of `check`.
   `test-linux`, `test-windows`, `test-macos` and `budgets`; branches need not be up to
   date. The declaration leads: branch protection gains `budgets` only after the job lands.
 - **No broader-tier sweep runs in CI**: the composed CI/CD shape gates each pull request
-  at the affected tier, and a push to main runs only `budgets`, saving that commit's
-  results as the history pull requests compare with; the release re-gates nothing.
+  at the affected tier, and a push to main runs only `budgets`, saving the merged pull
+  request's figures as the history pull requests compare with; the release re-gates nothing.
 - **Releases**: release-plz on every push to main opens the release PR (version,
   CHANGELOG.md) and arms auto-merge on it; when it merges, release-plz tags `v<version>`
   and cuts the GitHub Release, which runs `release.yml`: each `build-<platform>` job

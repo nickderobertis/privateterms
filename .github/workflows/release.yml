@@ -156,7 +156,10 @@ jobs:
     env:
       TAG: ${{ github.event.release.tag_name }}
     steps:
+      # The full history: privateterms-release-cycle-time diffs each merge against its parent.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: extractions/setup-just@v2
       - uses: oven-sh/setup-bun@v2
       - uses: actions-rust-lang/setup-rust-toolchain@v1
