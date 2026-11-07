@@ -1,0 +1,9 @@
+# What the published crate is built from: `release-cycle-time` counts only the pull requests
+# whose merge changes one of these git pathspecs (privateterms-release-cycle-time, budgets.yaml).
+# crates/privateterms/Cargo.toml's `include` names the crate's files; the workspace manifest and
+# the lockfile set its dependencies.
+crates/privateterms/src
+crates/privateterms/README.md
+crates/privateterms/Cargo.toml
+Cargo.toml
+Cargo.lock

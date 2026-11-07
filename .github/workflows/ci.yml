@@ -231,10 +231,12 @@ jobs:
         shell: bash
         run: just ci-test
 
-  # The one report job: every budget that can run here, compared with the base branch's history,
-  # in one standing pull request comment. Unfiltered and after every other job however it ended,
-  # and it builds and tests nothing. The full history lets local git prove each saved base
-  # commit's ancestry, and the group serializes comment writers.
+  # The one report job: every budget a pull request can move, compared with the base branch's
+  # history, in one standing pull request comment. Unfiltered and after every other job however it
+  # ended, and it builds and tests nothing. No test job saves a result for it, so it takes no saved
+  # results; a base push takes the merged pull request's figures from that run's artifact. The full
+  # history lets local git prove each saved base commit's ancestry, and the group serializes comment
+  # writers.
   budgets:
     needs: [lint, test-linux, test-windows, test-macos]
     if: always()
@@ -252,7 +254,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: nickderobertis/onebudgetspec-github-action@v0.1.2
+      - uses: nickderobertis/onebudgetspec-github-action@v0.2.0
         with:
           token: ${{ github.token }}
           enforcement-exclude-labels: release-tail,host-variable
+          omit-labels: not-measured-on-pr

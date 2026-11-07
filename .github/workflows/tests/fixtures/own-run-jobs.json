@@ -1,0 +1,66 @@
+{
+  "_provenance": "Real run 42234862700 of this repository, as its job listing read while its budgets job was still in progress: names, conclusions, labels and timestamps kept, ids and runner names dropped.",
+  "total_count": 5,
+  "jobs": [
+    {
+      "name": "test-windows",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions 1",
+      "labels": [
+        "windows-latest"
+      ],
+      "started_at": "2026-11-06T14:32:46Z",
+      "completed_at": "2026-11-06T14:34:22Z"
+    },
+    {
+      "name": "lint",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions 1",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "started_at": "2026-11-06T14:32:46Z",
+      "completed_at": "2026-11-06T14:36:32Z"
+    },
+    {
+      "name": "test-macos",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions 1",
+      "labels": [
+        "macos-latest"
+      ],
+      "started_at": "2026-11-06T14:32:47Z",
+      "completed_at": "2026-11-06T14:33:44Z"
+    },
+    {
+      "name": "test-linux",
+      "workflow_name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "runner_name": "GitHub Actions 1",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "started_at": "2026-11-06T14:32:47Z",
+      "completed_at": "2026-11-06T14:34:22Z"
+    },
+    {
+      "name": "budgets",
+      "workflow_name": "ci",
+      "status": "in_progress",
+      "conclusion": null,
+      "runner_name": "GitHub Actions 1",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "started_at": "2026-11-06T14:36:35Z",
+      "completed_at": null
+    }
+  ]
+}

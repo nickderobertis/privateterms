@@ -3,7 +3,9 @@
 import hashlib
 import io
 import json
+import os
 import re
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -21,6 +23,17 @@ import released_action
 ROOT = released_action.ROOT
 PREDECESSORS = {"lint", "test-linux", "test-windows", "test-macos"}
 REPORT_ONLY = ["release-tail", "host-variable"]
+RECORDED_RUN = Path(__file__).resolve().parent / "fixtures/own-run-jobs.json"
+OMITTED_LABEL = "not-measured-on-pr"
+# What a pull request cannot move: its report counts these in one line and runs none of them.
+OMITTED = {
+    "privateterms-cd-job-time",
+    "privateterms-release-cycle-time",
+    "privateterms-cd-job-count",
+    "privateterms-release-read-requests",
+    "privateterms-pr-read-requests",
+    "privateterms-gate-time",
+}
 # Everything this repository held before the report job, but the one permitted increment.
 THRESHOLDS = {
     "privateterms-ci-check-time": 1800,
@@ -43,7 +56,12 @@ COMMANDS = {
         "--exclude-workflow",
         "ci",
     ],
-    "privateterms-release-cycle-time": [*FIGURES, "release-cycle-time"],
+    "privateterms-release-cycle-time": [
+        *FIGURES,
+        "release-cycle-time",
+        "--published-paths",
+        ".github/release-published-paths",
+    ],
     "privateterms-ci-job-count": [*FIGURES, "job-count", "--stage", "pr"],
     "privateterms-cd-job-count": [
         *FIGURES,
@@ -209,10 +227,31 @@ class Workflow(unittest.TestCase):
             for label in budget.get("labels", [])
         }
         self.assertEqual(
-            carried,
+            carried - {OMITTED_LABEL},
             set(listed),
             "no root budget is enforced in this job or left unlisted",
         )
+
+    def test_exactly_the_budgets_a_pull_request_cannot_move_are_left_out(self):
+        self.assertEqual(self.step["with"]["omit-labels"], OMITTED_LABEL)
+        self.assertIn("omit-labels", released_action.load().declared["inputs"])
+        self.assertEqual(
+            {
+                key
+                for key, budget in self.budgets.items()
+                if OMITTED_LABEL in budget["labels"]
+            },
+            OMITTED,
+        )
+
+    def test_the_report_job_takes_no_saved_results_since_no_test_job_saves_any(self):
+        self.assertNotIn("saved-results-artifacts", self.step["with"])
+        for name in PREDECESSORS:
+            uses = [step.get("uses", "") for step in self.jobs[name]["steps"]]
+            self.assertFalse(
+                [used for used in uses if "upload-artifact" in used],
+                f"{name} uploads nothing for the report job to read",
+            )
 
     def test_root_budgets_keep_their_limits_labels_and_commands(self):
         self.assertEqual(
@@ -228,7 +267,34 @@ class Workflow(unittest.TestCase):
                 if key == "privateterms-gate-time"
                 else ["release-tail"]
             )
+            if key in OMITTED:
+                wanted = [*wanted, OMITTED_LABEL]
             self.assertEqual(budget["labels"], wanted, key)
+
+    def test_the_cycle_time_figure_gets_the_history_and_the_paths_it_reads(self):
+        release = yaml.safe_load(
+            (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        )
+        checkout = release["jobs"]["publish"]["steps"][0]
+        self.assertTrue(checkout["uses"].startswith("actions/checkout@"))
+        self.assertEqual(checkout["with"]["fetch-depth"], 0, "it diffs merge^1 merge")
+        command = self.budgets["privateterms-release-cycle-time"]["command"]
+        paths = command[command.index("--published-paths") + 1]
+        specs = [
+            line
+            for line in (ROOT / paths).read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertTrue(specs)
+        for spec in specs:
+            tracked = subprocess.run(
+                ["git", "ls-files", "--cached", "--others", "--exclude-standard", spec],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+            self.assertTrue(tracked, f"{spec} names nothing this repository holds")
 
     def test_the_job_count_budget_allows_exactly_the_jobs_a_pull_request_starts(self):
         limit = self.budgets["privateterms-ci-job-count"]["threshold"]
@@ -244,6 +310,70 @@ class Workflow(unittest.TestCase):
         governance = json.loads((ROOT / ".github/governance.json").read_text())
         self.assertEqual(set(governance["required_checks"]), {*PREDECESSORS, "budgets"})
         self.assertIs(governance["strict"], False)
+
+
+class OwnRunFigures(unittest.TestCase):
+    """The real commands over one recorded run, doubled only at the `gh` they read it through."""
+
+    def check(self, budget, event_name="pull_request"):
+        with tempfile.TemporaryDirectory() as directory:
+            stand_in = Path(directory) / "gh"
+            stand_in.write_text(
+                f'#!/bin/sh\necho "$*" >> {directory}/asked\ncat {RECORDED_RUN}\n'
+            )
+            stand_in.chmod(0o755)
+            done = subprocess.run(
+                [
+                    str(ROOT / "node_modules/.bin/onebudgetspec"),
+                    "check",
+                    "budgets.yaml",
+                    "--id",
+                    budget,
+                    "--json",
+                ],
+                cwd=ROOT,
+                env={
+                    **os.environ,
+                    "PATH": f"{directory}{os.pathsep}{os.environ['PATH']}",
+                    "GITHUB_EVENT_NAME": event_name,
+                    "GITHUB_REPOSITORY": "owner/repo",
+                    "GITHUB_RUN_ID": "42",
+                    "ONEVCS": "no-such-onevcs",
+                },
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            asked = Path(directory, "asked")
+            return (
+                done,
+                json.loads(done.stdout)["results"][0],
+                asked.read_text() if asked.exists() else "",
+            )
+
+    def test_a_pull_request_reports_its_own_runs_longest_finished_job(self):
+        _, result, asked = self.check("privateterms-ci-check-time")
+        print(
+            f"replayed privateterms-ci-check-time: {result['actual']}s of "
+            f"{result['threshold']}s, {result['verdict']}"
+        )
+        self.assertEqual((result["verdict"], result["actual"]), ("within", 226), result)
+        self.assertIn("repos/owner/repo/actions/runs/42/jobs", asked)
+
+    def test_a_pull_request_counts_its_own_runs_jobs_the_one_in_progress_too(self):
+        _, result, asked = self.check("privateterms-ci-job-count")
+        print(
+            f"replayed privateterms-ci-job-count: {result['actual']} of "
+            f"{result['threshold']} jobs, {result['verdict']}"
+        )
+        self.assertEqual((result["verdict"], result["actual"]), ("within", 5), result)
+        self.assertEqual(len(asked.splitlines()), 1, "one read of the run's jobs")
+
+    def test_any_other_event_never_reads_its_own_run(self):
+        done, result, asked = self.check("privateterms-ci-job-count", "push")
+        self.assertEqual(done.returncode, 3, done.stdout)
+        self.assertEqual(asked, "")
+        self.assertEqual(result["verdict"], "error", result)
 
 
 class FetchingTheRelease(unittest.TestCase):
