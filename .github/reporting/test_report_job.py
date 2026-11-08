@@ -176,14 +176,149 @@ class Host(harness.Host):
         return super().read(handler, path)
 
 
-def one_row(markdown: str, budget: str) -> str:
-    rows = [
-        line
-        for line in markdown.splitlines()
-        if line.startswith("|") and f"/ {budget} " in line
+# Where each part of the core's comment layout opens; each closes at its next `</details>`.
+SECTIONS = {
+    "attention": "<details open><summary><b>Needs attention",
+    "within": "<details><summary><b>Within budget",
+    "details": "<details><summary>Details</summary>",
+    "earlier": "<details><summary>Flags on earlier heads",
+}
+ATTENTION_HEADER = "| Budget | Now · vs base | Reason |"
+WITHIN_HEADER = "| Budget | Now · vs base |"
+MARKS = ("✅", "❌", "⚠️")
+SUMMARY = re.compile(
+    r"^\*\*(?:⚠️ (?P<attention>\d+) need attention|✅ Nothing needs attention)\*\*"
+    r" · (?P<within>\d+) within budget(?: · (?P<unmeasured>\d+) not measured)? · head ",
+    re.MULTILINE,
+)
+NOT_MEASURED = "Not measured on this run"
+MISSING = "Why some figures are missing"
+
+
+def section(body: str, name: str) -> str | None:
+    """One collapsible part of a comment, or None when it has none."""
+    start = body.find(SECTIONS[name])
+    return None if start < 0 else body[start : body.index("</details>", start)]
+
+
+def table_rows(text: str | None) -> list[tuple[str, list[str]]]:
+    """A section's table rows in order: each budget's shown name, then its other cells."""
+    rows = []
+    for line in (text or "").splitlines():
+        if line.startswith("| **"):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            rows.append((cells[0].strip("*"), cells[1:]))
+    return rows
+
+
+def listed(text: str | None, heading: str) -> list[tuple[str, str]]:
+    """The `- names: text` bullets under one bold heading of the Details section, in order."""
+    if not text or f"**{heading}" not in text:
+        return []
+    block = text.split(f"**{heading}", 1)[1].split("\n\n", 2)[1]
+    items = []
+    for line in block.splitlines():
+        if line.startswith("- "):
+            names, said = line[2:].split(": ", 1)
+            items.extend((name, said) for name in names.split(", "))
+    return items
+
+
+def placements(body: str, budget: str) -> list[tuple[str, object]]:
+    """Every place a comment shows `budget` as a row, as (section, cells or text)."""
+    found = [
+        (name, cells)
+        for name in ("attention", "within")
+        for shown, cells in table_rows(section(body, name))
+        if shown == budget
     ]
-    assert len(rows) == 1, (budget, rows)
-    return rows[0]
+    return found + [
+        ("not-measured", said)
+        for shown, said in listed(section(body, "details"), NOT_MEASURED)
+        if shown == budget
+    ]
+
+
+def placed(body: str, budget: str) -> tuple[str, object]:
+    """The one place a comment shows `budget`."""
+    found = placements(body, budget)
+    assert len(found) == 1, (budget, found, body)
+    return found[0]
+
+
+def missing_reason(body: str, budget: str) -> str:
+    """Why the Details section says `budget` has no figure."""
+    reasons = [
+        said
+        for shown, said in listed(section(body, "details"), MISSING)
+        if shown == budget
+    ]
+    assert len(reasons) == 1, (budget, body)
+    return reasons[0]
+
+
+EARLIER_HEAD = re.compile(r"^([0-9a-f]{40}) \(attempt \d+\): \d+ adverse flag\(s\)$")
+
+
+def earlier_flags(body: str) -> dict[str, list[str]] | None:
+    """The folded flags of a pull request's earlier heads, `file/id` by head, or None."""
+    text = section(body, "earlier")
+    if text is None:
+        return None
+    heads: dict[str, list[str]] = {}
+    head = None
+    for line in text.splitlines():
+        if started := EARLIER_HEAD.match(line):
+            head = started[1]
+            heads[head] = []
+        elif line.startswith("- "):
+            assert head is not None, text
+            heads[head].append(line[2:].split(": ", 1)[0])
+    return heads
+
+
+def figure(value: float) -> str:
+    """A figure as the core's layout writes it: grouped whole from 100, one decimal from 10."""
+    if abs(value) >= 100:
+        return f"{value:,.0f}"
+    return f"{value:.1f}" if abs(value) >= 10 else f"{value:.2f}"
+
+
+def signed(value: float) -> str:
+    rounded = f"{value:+.1f}"
+    return "+0.0" if rounded == "-0.0" else rounded
+
+
+def report_only(run: dict) -> set[str]:
+    """The budgets a saved run renders as report-only: catalog labels it excludes from enforcement."""
+    excluded = set(run["enforcement_exclude_labels"])
+    return {
+        entry["id"]
+        for entry in run["catalog"]
+        if excluded & set(entry.get("labels") or [])
+    }
+
+
+def bucket(row: dict, only: bool) -> str:
+    """The section the core's contract gives a saved row."""
+    verdict = row.get("verdict")
+    if verdict == "over" or (verdict == "error" and not only) or row.get("flag"):
+        return "attention"
+    return "within" if verdict == "within" else "not-measured"
+
+
+def reason(row: dict, only: bool) -> str:
+    """The one phrase of the core's fixed set that a Needs attention row gives its verdict and flag."""
+    verdict = row.get("verdict")
+    if verdict == "over":
+        phrase = "Over limit · flagged" if row.get("flag") else "Over limit"
+    elif verdict == "error":
+        phrase = "Error"
+    elif row.get("sd") == 0:
+        phrase = "Flagged (was constant)"
+    else:
+        phrase = f"Flagged {signed(row.get('sigma_change') or 0)} SD"
+    return f"{phrase} (report-only)" if only else phrase
 
 
 class Journey(unittest.TestCase):
@@ -201,6 +336,8 @@ class Journey(unittest.TestCase):
         self.runner_bin = self.scratch / "runner-bin"
         self.path = runner_path(self.runner_bin)
         self.next_run = 1000
+        # Each head whose report this pull request's comment took, with what its saved rows flagged.
+        self.posted_flags: dict[str, list[str]] = {}
         for name in tracked_files():
             source, target = ROOT / name, self.repository.path / name
             if source.is_file() or source.is_symlink():
@@ -238,7 +375,97 @@ class Journey(unittest.TestCase):
             **options,
         )
         self.addCleanup(job.close)
-        return job.run()
+        posted = [comment["body"] for comment in self.host.comments]
+        job = job.run()
+        if (job.out / "report.md").exists():
+            self.assert_layout(job, job.markdown())
+        if [comment["body"] for comment in self.host.comments] != posted:
+            body = self.host.comments[-1]["body"]
+            self.assert_layout(job, body)
+            _, rows = self.saved_report(job)
+            # Only earlier heads that flagged something fold in, each under its own head.
+            earlier = {
+                head: flags
+                for head, flags in self.posted_flags.items()
+                if head != job.sha and flags
+            }
+            self.assertEqual(earlier_flags(body), earlier or None, body)
+            self.posted_flags[job.sha] = sorted(
+                f"{row['file']}/{budget}"
+                for budget, row in rows.items()
+                if row.get("flag")
+            )
+        return job
+
+    def saved_report(self, job) -> tuple[dict, dict]:
+        """The run and its comparison rows as the job's results artifact saved them."""
+        files = self.host.artifact_files(job.run_id) or {}
+        if "comparison-report.json" in files:
+            run = json.loads(files["budget-run.json"].decode())
+            report = json.loads(files["comparison-report.json"].decode())
+        else:
+            run, report = (
+                job.saved("budget-run.json"),
+                job.saved("comparison-report.json"),
+            )
+        return run, {row["id"]: row for row in report["rows"]}
+
+    def assert_layout(self, job, body: str):
+        """The core's layout: every saved row once, in the section its verdict and flag give.
+
+        The harness's repository is `owner/repo` and no budget id here starts `repo-`, so the
+        layout shows every id whole.
+        """
+        run, rows = self.saved_report(job)
+        only = report_only(run)
+        wanted = {
+            name: {
+                budget
+                for budget, row in rows.items()
+                if bucket(row, budget in only) == name
+            }
+            for name in ("attention", "within", "not-measured")
+        }
+        attention = table_rows(section(body, "attention"))
+        within = table_rows(section(body, "within"))
+        unmeasured = listed(section(body, "details"), NOT_MEASURED)
+        shown = [name for name, _ in attention + within + unmeasured]
+        self.assertEqual(sorted(shown), sorted(rows), f"each saved row once: {body}")
+        self.assertEqual({name for name, _ in attention}, wanted["attention"], body)
+        self.assertEqual({name for name, _ in within}, wanted["within"], body)
+        self.assertEqual({name for name, _ in unmeasured}, wanted["not-measured"], body)
+
+        self.assertIn(SECTIONS["attention"], body)
+        if attention:
+            self.assertIn(ATTENTION_HEADER, section(body, "attention"))
+        else:
+            self.assertIn("Nothing failed or was flagged.", section(body, "attention"))
+        for budget, cells in attention:
+            self.assertEqual(len(cells), 2, (budget, cells))
+            self.assertEqual(cells[1], reason(rows[budget], budget in only), budget)
+        if within:
+            self.assertIn(WITHIN_HEADER + "\n", section(body, "within"))
+        for budget, cells in within:
+            self.assertEqual(len(cells), 1, (budget, cells))
+        for line in body.splitlines():
+            if line.startswith("|"):
+                for mark in MARKS:
+                    self.assertNotIn(mark, line)
+
+        summary = SUMMARY.search(body)
+        self.assertIsNotNone(summary, body)
+        self.assertEqual(int(summary["attention"] or 0), len(attention), body)
+        self.assertEqual(int(summary["within"]), len(within), body)
+        self.assertEqual(int(summary["unmeasured"] or 0), len(unmeasured), body)
+
+        omits = any(
+            OMIT_LABEL in (entry.get("labels") or []) for entry in run["catalog"]
+        )
+        if omits:
+            self.assertEqual(body.count(LEFT_OUT_LINE), 1, body)
+            self.assertIn(LEFT_OUT_LINE, section(body, "details"))
+        else:
+            self.assertNotIn("left out because", body)
 
     def base_push(self):
         self.repository.git("checkout", "--quiet", "main")
@@ -321,6 +548,7 @@ class ProductionCatalog(Journey):
         self.assertEqual(set(rows), {OWN_BUDGET, *CI_TIME_PAIR})
         markdown = job.markdown()
         self.assertEqual(markdown.count(LEFT_OUT_LINE), 1, markdown)
+        self.assertIn(LEFT_OUT_LINE, section(markdown, "details"))
         for budget in OMITTED:
             self.assertNotIn(budget, markdown)
         self.assertNotIn("gate-time", self.commands_run())
@@ -345,17 +573,26 @@ class ProductionCatalog(Journey):
         # The longest finished job, the budgets job in progress counting toward the jobs alone.
         self.assertEqual(rows[CI_CHECK_TIME]["current"], 226)
         self.assertEqual(rows[JOB_COUNT]["current"], 5)
+        # Report-only, and within: the folded table carries no reason, so the saved run says so.
+        self.assertLessEqual(CI_TIME_PAIR, report_only(self.saved(job)))
         for budget in CI_TIME_PAIR:
             self.assertEqual(rows[budget]["verdict"], "within", budget)
-            self.assertIn("report-only", one_row(job.markdown(), budget))
+            self.assertEqual(placed(job.markdown(), budget)[0], "within", budget)
         self.assertEqual(self.saved(job)["unavailable"], [])
 
         self.assertEqual(len(self.host.comments), 1)
         body = self.host.comments[0]["body"]
-        self.assertIn(LEFT_OUT_LINE, body)
+        self.assertIn(LEFT_OUT_LINE, section(body, "details"))
         for budget in (OWN_BUDGET, *CI_TIME_PAIR):
-            # Its figure and verdict: the baseline columns wait for five base samples.
-            self.assertRegex(one_row(body, budget), r"\| within \| [\d.]+ \|")
+            # Its figure, folded within budget: the comparison waits for five base samples.
+            place, cells = placed(body, budget)
+            self.assertEqual(place, "within", budget)
+            self.assertEqual(
+                cells,
+                [
+                    f"{figure(rows[budget]['current'])} {rows[budget]['unit']}<br>baseline 0/5"
+                ],
+            )
         # The comment carries no breakdown: those stay in the artifact and the job's log.
         for detail in ("install_seconds", "phases", "profile", "per test"):
             self.assertNotIn(detail, body)
@@ -382,7 +619,16 @@ class ProductionCatalog(Journey):
         self.assertEqual(rows[JOB_COUNT]["current"], 6)
         for budget in CI_TIME_PAIR:
             self.assertEqual(rows[budget]["verdict"], "over", budget)
-            self.assertIn("report-only", one_row(job.markdown(), budget))
+            self.assertEqual(
+                placed(job.markdown(), budget),
+                (
+                    "attention",
+                    [
+                        f"{figure(rows[budget]['current'])} {rows[budget]['unit']}<br>baseline 0/5",
+                        "Over limit (report-only)",
+                    ],
+                ),
+            )
 
     def test_a_refused_read_of_the_run_is_a_row_with_its_reason_and_no_number(self):
         self.host.refuse.append(
@@ -394,7 +640,9 @@ class ProductionCatalog(Journey):
         for budget in CI_TIME_PAIR:
             self.assertNotIn("verdict", rows[budget], budget)
             self.assertIsNone(rows[budget].get("current"), budget)
-            self.assertIn("unavailable", one_row(job.markdown(), budget))
+            markdown = job.markdown()
+            self.assertEqual(placed(markdown, budget)[0], "not-measured", budget)
+            self.assertIn("403", missing_reason(markdown, budget))
         self.assertEqual(self.results(job)[OWN_BUDGET]["verdict"], "within")
 
     def test_a_base_push_records_the_merged_runs_figures_running_no_command(self):
@@ -457,7 +705,9 @@ class ProductionCatalog(Journey):
         pull = self.pull_request()
         self.assertEqual(pull.exit_code, 0, pull.stdout)
         self.assertEqual(pull.rows()[OWN_BUDGET]["baseline_n"], 1)
-        self.assertIn(" | 1 | ", one_row(self.host.comments[0]["body"], OWN_BUDGET))
+        place, cells = placed(self.host.comments[0]["body"], OWN_BUDGET)
+        self.assertEqual(place, "within")
+        self.assertTrue(cells[0].endswith("<br>baseline 1/5"), cells)
 
     def test_a_merged_run_whose_artifact_expired_leaves_the_rows_as_they_would_be(self):
         pull = self.pull_request()
@@ -498,7 +748,8 @@ class ProductionCatalog(Journey):
             self.assertIsNone(rows[budget].get("current"), budget)
             self.assertIn(NO_CREDENTIAL, reasons[budget])
             self.assertIn(NO_CREDENTIAL, rows[budget]["unavailable"])
-            self.assertIn(NO_CREDENTIAL, one_row(job.markdown(), budget))
+            self.assertEqual(placed(job.markdown(), budget)[0], "not-measured")
+            self.assertIn(NO_CREDENTIAL, missing_reason(job.markdown(), budget))
 
     def test_the_own_budget_over_its_line_fails_the_job_and_keeps_its_results(self):
         self.repository.write(
@@ -560,9 +811,9 @@ class OrdinaryCatalog(Journey):
         self.assertEqual(set(reasons), set(CATALOG_UNAVAILABLE))
         for budget, reason in CATALOG_UNAVAILABLE.items():
             self.assertIn(reason, reasons[budget])
-        self.assertIn(
-            "report-only",
-            one_row(self.host.comments[0]["body"], "fixture-laptop-figure"),
+        self.assertEqual(
+            placed(self.host.comments[0]["body"], "fixture-laptop-figure"),
+            ("attention", ["50.0 count<br>baseline 0/5", "Over limit (report-only)"]),
         )
 
     def test_a_base_push_saves_the_same_results_and_starts_the_rolling_file(self):
@@ -606,7 +857,11 @@ class OrdinaryCatalog(Journey):
         self.assertEqual(row["verdict"], "within")
         self.assertEqual(row["baseline_n"], 5)
         self.assertTrue(row["flag"], row)
-        self.assertIn("provisional", worse.markdown())
+        # Compared with five base samples, constant until now.
+        self.assertEqual(
+            placed(worse.markdown(), "fixture-bundle-bytes"),
+            ("attention", ["900 bytes<br>base 500 bytes", "Flagged (was constant)"]),
+        )
         self.assertEqual(len(self.host.comments), 1)
 
         better = self.pull_request_head(files={"fixture-bundle-size": "100\n"})
@@ -618,20 +873,22 @@ class OrdinaryCatalog(Journey):
         body = self.host.comments[0]["body"]
         self.assertIn(worse.sha, body)
         self.assertIn(better.sha, body)
-        kept = [
-            line
-            for line in body.splitlines()
-            if line.startswith("- ") and "fixture-bundle-bytes" in line
-        ]
+        earlier = section(body, "earlier")
         self.assertEqual(
-            len(kept), 1, f"the first head's flag stays, the second adds none: {body}"
+            earlier.count(
+                "- budgets.yaml/fixture-bundle-bytes: constant-baseline-change"
+            ),
+            1,
+            f"the first head's flag stays, folded, the second adds none: {body}",
         )
-        flags = body.split("### Per-head adverse flags")[1]
         # Only the bundle: a wall-clock row may also flag on a loaded host, and tells nothing here.
-        first, second = flags.split(worse.sha)[1].split(better.sha)
-        self.assertIn("fixture-bundle-bytes", first)
-        self.assertNotIn(
-            "fixture-bundle-bytes", second.split("<!-- onebudgetspec-history")[0]
+        flags = earlier_flags(body)
+        self.assertEqual(list(flags), [worse.sha], body)
+        self.assertIn("budgets.yaml/fixture-bundle-bytes", flags[worse.sha])
+        self.assertEqual(
+            placed(body, "fixture-bundle-bytes")[0],
+            "within",
+            "the second head improved it",
         )
 
     def test_host_faults_are_diagnostics_and_a_real_failure_survives_them(self):
