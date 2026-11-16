@@ -18,3 +18,11 @@ if ! cargo test -p privateterms --doc --locked >"$log" 2>&1; then
   echo "crate-test: a doctest failed (above); the README's examples are doctests too" >&2
   exit 1
 fi
+# DEMONSTRATION ONLY, never lands: the startup timing harness and this runner's processor.
+case "$(uname -s)" in
+  Linux) cpu="$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2-)" ;;
+  Darwin) cpu="$(sysctl -n machdep.cpu.brand_string)" ;;
+  *) cpu="$(powershell -NoProfile -Command '(Get-CimInstance Win32_Processor).Name')" ;;
+esac
+echo "STARTUP-TIMING-CPU ${cpu}"
+cargo run -q --release --locked -p privateterms --example startup_timing
