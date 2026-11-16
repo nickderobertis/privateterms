@@ -74,7 +74,7 @@ msrv:
 # of the projects this change can reach. Formatting, linting and the supply chain run
 # once, in the `lint` job. The budgets job runs on Linux alone, so its journeys do too.
 ci-test:
-    bunx nx affected --base={{base}} -t test build e2e budgets budgets-host {{ if os() == "linux" { "" } else { "--exclude=report-job,github-workflows" } }}
+    bunx nx affected --base={{base}} --output-style=static -t test build e2e budgets budgets-host {{ if os() == "linux" { "" } else { "--exclude=report-job,github-workflows" } }}
 
 # One phase of one release job: `just release <job> <phase> --tag <tag>`, where <job> is
 # a job of .github/workflows/release.yml (build-linux, build-linux-arm64, build-macos,
