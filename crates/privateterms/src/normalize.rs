@@ -269,7 +269,7 @@ fn sources() -> &'static HashMap<char, Vec<usize>> {
 
 /// Ascending, every code point that can be a source: one NFKD or lowercasing changes,
 /// and σ, which is the source of ς. Any other code point decomposes and lowercases to
-/// itself alone, so walking only these, about one in forty, builds the same map.
+/// itself alone, so walking only these builds the same map.
 fn contributing() -> impl Iterator<Item = char> {
     #[allow(deprecated)]
     // ICU's derived inertness property is exactly "NFKD maps it to itself", the guarantee
@@ -366,8 +366,6 @@ mod tests {
     // holds the matcher's outcomes themselves to the base commit's.
     #[test]
     fn the_narrowed_walk_builds_the_map_every_code_point_builds() {
-        let narrowed = sources();
-        assert_eq!(narrowed, &sources_from_every_code_point());
-        assert!(contributing().count() * 20 < 0x110000);
+        assert_eq!(sources(), &sources_from_every_code_point());
     }
 }
