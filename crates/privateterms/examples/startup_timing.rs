@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use privateterms::{Action, Matcher, ResolvedRule, TermMode, TermRule};
 
-const RUN_LABEL: &str = "base-run-1";
+const RUN_LABEL: &str = "base-run-2";
 const PROCESSES: usize = 30;
 const PASSES: usize = 15;
 
