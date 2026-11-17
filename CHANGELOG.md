@@ -5,6 +5,12 @@ from the Conventional Commits a release carries.
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/nickderobertis/privateterms/compare/v0.1.2...v0.1.3) - 2026-11-17
+
+### Performance
+
+- *(matcher)* build a matcher without eagerly constructing the contributor prefilter ([#31](https://github.com/nickderobertis/privateterms/pull/31))
+
 ## [0.1.2](https://github.com/nickderobertis/privateterms/compare/v0.1.1...v0.1.2) - 2026-11-04
 
 ### Performance
