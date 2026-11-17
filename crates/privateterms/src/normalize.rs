@@ -4,8 +4,10 @@
 //! the original.
 
 use std::borrow::Cow;
+use std::collections::HashMap;
+use std::sync::OnceLock;
 
-use icu_normalizer::ComposingNormalizerBorrowed;
+use icu_normalizer::{ComposingNormalizerBorrowed, DecomposingNormalizerBorrowed};
 use icu_properties::props::{
     CanonicalCombiningClass, ChangesWhenLowercased, DefaultIgnorableCodePoint,
 };
@@ -47,7 +49,6 @@ pub(crate) fn candidate_text_is_stable(text: &str) -> bool {
     if text.is_ascii() {
         return true;
     }
-    use std::sync::OnceLock;
     static STABLE: OnceLock<Box<[bool]>> = OnceLock::new();
     let stable = STABLE.get_or_init(|| {
         #[allow(deprecated)]
@@ -241,32 +242,55 @@ pub(crate) struct Contributors {
     required: Vec<u64>,
 }
 
-impl Contributors {
-    pub(crate) fn new(terms: impl Iterator<Item = String>) -> Self {
-        use icu_normalizer::DecomposingNormalizerBorrowed;
-        use std::sync::OnceLock;
-        static SOURCES: OnceLock<HashMap<char, Vec<usize>>> = OnceLock::new();
-        use std::collections::HashMap;
+/// For each character, every non-ignorable code point other than itself whose NFKD,
+/// lowercased one character at a time, contains it: the code points a term's character
+/// can arrive in. Built once per process.
+fn sources() -> &'static HashMap<char, Vec<usize>> {
+    static SOURCES: OnceLock<HashMap<char, Vec<usize>>> = OnceLock::new();
+    SOURCES.get_or_init(|| {
         let decomposition = DecomposingNormalizerBorrowed::new_nfkd();
-        let sources = SOURCES.get_or_init(|| {
-            let mut sources: HashMap<char, Vec<usize>> = HashMap::new();
-            for cp in 0..=0x10ffff {
-                if let Some(c) = char::from_u32(cp).filter(|c| !ignorable(*c)) {
-                    for d in decomposition.normalize_iter(std::iter::once(c)) {
-                        for lower in d.to_lowercase() {
-                            if lower != c {
-                                sources.entry(lower).or_default().push(cp as usize);
-                            }
-                            // String lowercasing also produces final sigma contextually.
-                            if lower == 'σ' {
-                                sources.entry('ς').or_default().push(cp as usize);
-                            }
-                        }
+        let mut sources: HashMap<char, Vec<usize>> = HashMap::new();
+        for c in contributing().filter(|c| !ignorable(*c)) {
+            for d in decomposition.normalize_iter(std::iter::once(c)) {
+                for lower in d.to_lowercase() {
+                    if lower != c {
+                        sources.entry(lower).or_default().push(c as usize);
+                    }
+                    // String lowercasing also produces final sigma contextually.
+                    if lower == 'σ' {
+                        sources.entry('ς').or_default().push(c as usize);
                     }
                 }
             }
-            sources
-        });
+        }
+        sources
+    })
+}
+
+/// Ascending, every code point that can be a source: one NFKD or lowercasing changes,
+/// and σ, which is the source of ς. Any other code point decomposes and lowercases to
+/// itself alone, so walking only these builds the same map.
+fn contributing() -> impl Iterator<Item = char> {
+    #[allow(deprecated)]
+    // ICU's derived inertness property is exactly "NFKD maps it to itself", the guarantee
+    // skipping a code point needs; no UCD property states it.
+    let inert = CodePointSetData::new::<icu_properties::props::NfkdInert>();
+    let lowered = CodePointSetData::new::<ChangesWhenLowercased>();
+    let mut points: Vec<u32> = inert
+        .iter_ranges_complemented()
+        .chain(lowered.iter_ranges())
+        .flatten()
+        .chain(std::iter::once('σ' as u32))
+        .collect();
+    points.sort_unstable();
+    points.dedup();
+    points.into_iter().filter_map(char::from_u32)
+}
+
+impl Contributors {
+    pub(crate) fn new(terms: impl Iterator<Item = String>) -> Self {
+        let decomposition = DecomposingNormalizerBorrowed::new_nfkd();
+        let sources = sources();
         let mut table = vec![0u64; 0x110000].into_boxed_slice();
         // At most 64 distinct alphabetic components are tracked. Dropping further
         // requirements only admits extra candidates; it cannot hide a hit. Terms
@@ -306,5 +330,42 @@ impl Contributors {
             .chars()
             .fold(0, |seen, c| seen | self.table[c as usize]);
         self.required.iter().any(|mask| seen & mask == *mask)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The source map built from every code point, as it was before `contributing`
+    /// narrowed the walk.
+    fn sources_from_every_code_point() -> HashMap<char, Vec<usize>> {
+        let decomposition = DecomposingNormalizerBorrowed::new_nfkd();
+        let mut sources: HashMap<char, Vec<usize>> = HashMap::new();
+        for c in (0..=0x10ffff)
+            .filter_map(char::from_u32)
+            .filter(|c| !ignorable(*c))
+        {
+            for d in decomposition.normalize_iter(std::iter::once(c)) {
+                for lower in d.to_lowercase() {
+                    if lower != c {
+                        sources.entry(lower).or_default().push(c as usize);
+                    }
+                    if lower == 'σ' {
+                        sources.entry('ς').or_default().push(c as usize);
+                    }
+                }
+            }
+        }
+        sources
+    }
+
+    // A structural assertion rather than a public-API journey: whether a code point the
+    // narrowed walk skips could have reached a term is a question about all 1,114,112 of
+    // them, which no affordable set of matched texts asks. `tests/matcher_equivalence.rs`
+    // holds the matcher's outcomes themselves to the base commit's.
+    #[test]
+    fn the_narrowed_walk_builds_the_map_every_code_point_builds() {
+        assert_eq!(sources(), &sources_from_every_code_point());
     }
 }
